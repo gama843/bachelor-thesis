@@ -3,6 +3,7 @@ import json
 import random
 from collections import Counter
 
+import numpy as np
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from torch.utils.data import Dataset
@@ -413,3 +414,73 @@ class Rotate180DegreesTransform(ImageAnswerTransform):
                 return 'left'
         
         return answer
+
+class GaussianNoiseTransform(ImageAnswerTransform):
+    """
+    A specialized ImageAnswerTransform that adds Gaussian noise to the image without modifying the answer.
+
+    This class inherits from ImageAnswerTransform and implements the specific functionality of applying 
+    Gaussian noise to an image. The answer remains unchanged.
+
+    Methods:
+    --------
+    add_gaussian_noise(img, state):
+        Adds Gaussian noise to the image.
+    """
+
+    def __init__(self, mean=0.0, std=0.1, state=None):
+        """
+        Initializes the GaussianNoiseTransform with predefined image transformation to add Gaussian noise.
+
+        Parameters:
+        -----------
+        mean : float, optional
+            The mean of the Gaussian noise (default=0.0).
+        std : float, optional
+            The standard deviation of the Gaussian noise (default=0.1).
+        state : dict, optional
+            A shared state dictionary used to pass information between the image and text transformations.
+            If not provided, it is initialized as an empty dictionary.
+        """
+        self.mean = mean
+        self.std = std
+        super().__init__(
+            image_transform=self.add_gaussian_noise,
+            text_transform=None,
+            state=state
+        )
+
+    def add_gaussian_noise(self, img, state):
+        """
+        Adds Gaussian noise to the image.
+
+        Parameters:
+        -----------
+        img : PIL.Image
+            The image to which Gaussian noise will be added.
+        state : dict
+            The state used for shared information between image and text transformations.
+
+        Returns:
+        --------
+        img : PIL.Image
+            The noisy image.
+        state : dict
+            The unchanged state dictionary.
+        """
+        # convert the image to a NumPy array and normalize to [0, 1]
+        np_img = np.array(img) / 255.0  
+        
+        # generate Gaussian noise
+        noise = np.random.normal(self.mean, self.std, np_img.shape)  
+        
+        noisy_img = np_img + noise
+
+        # clip values to ensure they are within [0, 1]
+        noisy_img = np.clip(noisy_img, 0, 1)  
+
+        # convert back to the range [0, 255]
+        noisy_img = (noisy_img * 255).astype(np.uint8)  
+        img = Image.fromarray(noisy_img)
+
+        return img, state
