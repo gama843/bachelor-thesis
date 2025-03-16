@@ -8,6 +8,19 @@ from sklearn.model_selection import train_test_split
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+import torch
+from torch.nn.utils.rnn import pad_sequence
+
+# batch preparation
+def collate_fn(batch):
+    images, questions, answers = zip(*batch)
+
+    images = torch.stack(images)
+    questions = [torch.tensor(q, dtype=torch.long) for q in questions]
+    questions = pad_sequence(questions, batch_first=True, padding_value=0)
+    answers = torch.tensor(answers, dtype=torch.long)
+
+    return images, questions, answers
 
 class DatasetBuilder:
     def __init__(self, data_dir, transform=None, transform_prob=0, random_seed=42):

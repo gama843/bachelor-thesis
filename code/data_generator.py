@@ -1261,13 +1261,15 @@ class DataGenerator:
                 objects_info = self._add_questions_and_answers(img_dim, objects_info, palette, shapes)
                 objects_info = self._add_image_description_matrix(objects_info)
             
-            path = os.path.join(self.base_path, f'{i}.png')
-            cv2.imwrite(path, img)
+            path = f'{i}.png'
             
             if i % (num_images / 100) == 0:
                 bar.update(i / (num_images / 100))
             
             all_images_info[path] = objects_info
+
+            path = os.path.join(self.base_path, f'{i}.png')
+            cv2.imwrite(path, img)
         
         json_path = os.path.join(self.base_path, 'descr.json')
         with open(json_path, 'w') as json_file:

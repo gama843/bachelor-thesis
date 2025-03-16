@@ -5,9 +5,13 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from data_generator import DataGenerator
 from models import ModelConstructor
-from dataset_builder import DatasetBuilder, Rotate180DegreesTransform
-from training import train_one_epoch, validate_one_epoch
+from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
+from training import validate_one_epoch, train_and_validate
 import os
+import datetime
+import warnings
+
+warnings.filterwarnings("ignore")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -30,17 +34,22 @@ def main():
         # if no arguments are passed, run the default behavior (dataset generation and model training)
         print("No arguments provided. Running default dataset generation and model training.")
         
-        generator = DataGenerator('../data')
-        generator.generate_dataset(img_dim=128, num_images=100)
+        img_dim = 224
+        num_images = 10000
+        num_epochs = 20
+        batch_size = 256
 
-        builder = DatasetBuilder('../data', Rotate180DegreesTransform(), 0.5)
-        train_loader = DataLoader(builder.train_dataset, batch_size=1, shuffle=True)
-        val_loader = DataLoader(builder.val_dataset, batch_size=1, shuffle=False)
-        test_loader = DataLoader(builder.test_dataset, batch_size=1, shuffle=False)
+        generator = DataGenerator('data')
+        generator.generate_dataset(img_dim=img_dim, num_images=num_images)
+
+        builder = DatasetBuilder('data', Rotate180DegreesTransform(), 0.5)
+        train_loader = DataLoader(builder.train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
+        val_loader = DataLoader(builder.val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
+        test_loader = DataLoader(builder.test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
 
         model_constructor = ModelConstructor()
         model = model_constructor.load_model(
-            model_type='baseline',
+            model_type='relational',
             vocab_size=len(builder.vocab),
             embed_size=128,
             hidden_size=256,
@@ -55,28 +64,19 @@ def main():
         model.to(device)
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        optimizer = optim.Adam(model.parameters(), lr=0.00025)
 
-        num_epochs = 1
+        # a unique folder for each run
+        today = datetime.datetime.now().strftime("%d%m%Y")       
+        run_folder = f"models/{today}_{num_images}_{img_dim}"
 
-        # training loop
-        for epoch in range(num_epochs):
-            print(f'Epoch {epoch+1}/{num_epochs}')
-            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-            print(f'Training Loss: {train_loss:.4f}')
-
-            val_loss, val_accuracy = validate_one_epoch(model, val_loader, criterion, device)
-            print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
-
-        # test after training
-        test_loss, test_accuracy = validate_one_epoch(model, test_loader, criterion, device)
-        print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
+        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder)
     
     else:
         # handle the provided arguments logic
         if args.generate2D:
             generator = DataGenerator(args.generate2D)
-            generator.generate_dataset(img_dim=128, num_images=100)
+            generator.generate_dataset(img_dim=224, num_images=5000)
             print(f"Dataset generated at {args.generate2D}")
 
         if args.eval:

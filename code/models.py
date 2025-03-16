@@ -169,13 +169,18 @@ class RelationalNetwork(nn.Module):
         """
         num_objects = object_features.size(1)
         relations = []
+
+        question_embedding = question_embedding.squeeze(0)
+
         for i in range(num_objects):
             for j in range(num_objects):
                 if i != j:
+
                     # concatenate the features of object pairs with the question embedding
                     pair_features = torch.cat(
                         [object_features[:, i], object_features[:, j], question_embedding], dim=1
                     )
+                    
                     relations.append(self.g_theta(pair_features))
         
         # sum the outputs from g_theta
