@@ -35,9 +35,9 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 224
-        num_images = 10000
-        num_epochs = 20
-        batch_size = 256
+        num_images = 200
+        num_epochs = 15
+        batch_size = 64
 
         generator = DataGenerator('data')
         generator.generate_dataset(img_dim=img_dim, num_images=num_images)
@@ -64,7 +64,7 @@ def main():
         model.to(device)
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.00025)
+        optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
         # a unique folder for each run
         today = datetime.datetime.now().strftime("%d%m%Y")       
@@ -76,7 +76,7 @@ def main():
         # handle the provided arguments logic
         if args.generate2D:
             generator = DataGenerator(args.generate2D)
-            generator.generate_dataset(img_dim=224, num_images=5000)
+            generator.generate_dataset(img_dim=224, num_images=10)
             print(f"Dataset generated at {args.generate2D}")
 
         if args.eval:

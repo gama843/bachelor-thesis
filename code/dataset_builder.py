@@ -13,14 +13,33 @@ from torch.nn.utils.rnn import pad_sequence
 
 # batch preparation
 def collate_fn(batch):
-    images, questions, answers = zip(*batch)
+    """
+    Custom collate function for DataLoader to batch images, tokenized questions, answers, 
+    and additional metadata like question types and subtypes.
+    
+    Parameters:
+    -----------
+    batch : list
+        A list of tuples (image, tokenized_question, encoded_answer, question_type, question_subtype).
+    
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - images (Tensor): Batch of images.
+        - questions (Tensor): Padded batch of tokenized questions.
+        - answers (Tensor): Batch of encoded answers.
+        - question_types (list): List of question types ('relational' or 'non-relational').
+        - question_subtypes (list): List of question subtypes (e.g., 'topbottom', 'closest').
+    """
+    images, questions, answers, question_types, question_subtypes = zip(*batch)
 
     images = torch.stack(images)
     questions = [torch.tensor(q, dtype=torch.long) for q in questions]
     questions = pad_sequence(questions, batch_first=True, padding_value=0)
     answers = torch.tensor(answers, dtype=torch.long)
 
-    return images, questions, answers
+    return images, questions, answers, list(question_types), list(question_subtypes)
 
 class DatasetBuilder:
     def __init__(self, data_dir, transform=None, transform_prob=0, random_seed=42):
@@ -109,7 +128,7 @@ class DatasetBuilder:
             img_info = data[image_path]
             for obj_info in img_info:
                 if 'question' in obj_info:
-                    samples.append((os.path.join(self.data_dir, image_path), obj_info['question'], obj_info['answer']))
+                    samples.append((os.path.join(self.data_dir, image_path), obj_info['question'], obj_info['answer'], obj_info['question_vector']))
         return samples
 
     def _compute_max_question_len(self, samples):
@@ -129,7 +148,7 @@ class DatasetBuilder:
             The length of the longest question in the dataset.
         """
         max_len = 0
-        for _, question, _ in samples:
+        for _, question, _, _ in samples:
             question_len = len(question.split())
             max_len = max(max_len, question_len)
         return max_len
@@ -154,7 +173,7 @@ class DatasetBuilder:
         """
         word_counter = Counter()
 
-        for _, question, _ in samples:
+        for _, question, _, _  in samples:
             word_counter.update(question.lower().split())
 
         vocab = {"<PAD>": 0, "<UNK>": 1}
@@ -166,9 +185,8 @@ class DatasetBuilder:
 
     def _build_answer_vocab(self, samples):
         """
-        @public
-
         Builds a vocabulary from the dataset answers, mapping each answer to a unique index.
+        Adds a special `<UNK>` token for unseen answers during validation/testing.
 
         Parameters:
         -----------
@@ -182,10 +200,12 @@ class DatasetBuilder:
         """
         answer_counter = Counter()
 
-        for _, _, answer in samples:
+        for _, _, answer, _ in samples:
             answer_counter.update([answer])
 
-        answer_vocab = {ans: idx for idx, ans in enumerate(answer_counter.keys())}
+        answer_vocab = {"<UNK>": 0}
+        for idx, ans in enumerate(answer_counter.keys(), start=1):
+            answer_vocab[ans] = idx
 
         return answer_vocab
     
@@ -223,7 +243,7 @@ class RelationalDataset(Dataset):
 
     def __len__(self):
         return len(self.samples)
-
+    
     def __getitem__(self, idx):
         """
         Fetch an image and its corresponding tokenized question-answer pair, applying the appropriate transformations.
@@ -231,10 +251,15 @@ class RelationalDataset(Dataset):
         Returns:
         --------
         tuple
-            A tuple (image, tokenized_question, encoded_answer) where image is a transformed image tensor, 
-            tokenized_question is a list of token indices, and encoded_answer is an integer index.
+            A tuple (image, tokenized_question, encoded_answer, question_type, question_subtype) where:
+            - image: Transformed image tensor.
+            - tokenized_question: List of token indices.
+            - encoded_answer: Integer index.
+            - question_type: 'relational' or 'non-relational'.
+            - question_subtype: Specific subtype of the question.
         """
-        image_path, question, answer = self.samples[idx]
+        image_path, question, answer, question_vector = self.samples[idx]
+        
         img = Image.open(image_path)
 
         if self.transform and random.random() < self.transform_prob:
@@ -244,7 +269,28 @@ class RelationalDataset(Dataset):
         tokenized_question = self._tokenize_question(question)
         encoded_answer = self._encode_answer(answer)
 
-        return img, tokenized_question, encoded_answer
+        question_type = "relational" if question_vector[6] == 1 else "non-relational"
+
+        if question_type == "relational":
+            if question_vector[8] == 1:
+                question_subtype = "closest"
+            elif question_vector[9] == 1:
+                question_subtype = "furthest"
+            elif question_vector[10] == 1:
+                question_subtype = "count"
+            else:
+                raise ValueError("Unknown relational question subtype")
+        else:
+            if question_vector[8] == 1:
+                question_subtype = "topbottom"
+            elif question_vector[9] == 1:
+                question_subtype = "leftright"
+            elif question_vector[10] == 1:
+                question_subtype = "shape"
+            else:
+                raise ValueError("Unknown non-relational question subtype")
+
+        return img, tokenized_question, encoded_answer, question_type, question_subtype
 
     def _tokenize_question(self, question):
         """
@@ -269,23 +315,28 @@ class RelationalDataset(Dataset):
 
     def _encode_answer(self, answer):
         """
-        @public
-
-        Converts an answer into its corresponding index.
+        Converts an answer into its corresponding index. If the answer is not in the vocabulary,
+        it falls back to an `<UNK>` token if available, otherwise raises an error.
 
         Parameters:
         -----------
         answer : str
             The answer to encode.
-        answer_vocab : dict
-            A dictionary mapping answers to indices.
 
         Returns:
         --------
         int
             The index of the answer in the answer vocabulary.
+
+        Raises:
+        -------
+        KeyError
+            If the answer is not found in `answer_vocab` and `<UNK>` is not available.
         """
-        return self.answer_vocab[answer]
+        if answer in self.answer_vocab:
+            return self.answer_vocab[answer]
+        else:
+            return self.answer_vocab["<UNK>"]
 
 class ImageAnswerTransform:
     """

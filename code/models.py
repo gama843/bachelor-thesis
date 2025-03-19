@@ -170,7 +170,8 @@ class RelationalNetwork(nn.Module):
         num_objects = object_features.size(1)
         relations = []
 
-        question_embedding = question_embedding.squeeze(0)
+        if question_embedding.dim() == 3:  # shape: [1, batch_size, question_dim]
+            question_embedding = question_embedding.squeeze(0)
 
         for i in range(num_objects):
             for j in range(num_objects):
