@@ -299,6 +299,9 @@ class BaselineModel(nn.Module):
         # encode the question
         question_embedding = self.question_encoder(questions)  # shape: (batch_size, hidden_size)
         
+        if question_embedding.dim() == 3:  # shape: [1, batch_size, question_dim]
+            question_embedding = question_embedding.squeeze(0)
+        
         # concatenate image and question features
         combined_features = torch.cat((image_features, question_embedding), dim=1)  # shape: (batch_size, 512*7*7 + hidden_size)
         
