@@ -2,6 +2,7 @@ import os
 import torch
 import time
 import numpy as np
+from plotting import visualize_training_log
 
 def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder):
     """
@@ -117,6 +118,17 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         log_and_print(f"Final model saved to {model_path}", log_file)
         
         log_and_print(f"\nTraining and evaluation completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}", log_file)
+
+        # generate visualizations
+        plots_dir = os.path.join(run_folder, "plots")
+        os.makedirs(plots_dir, exist_ok=True)
+        log_and_print(f"\nGenerating training visualizations in {plots_dir}", log_file)
+        
+        vis_start_time = time.time()
+        visualize_training_log(log_path, plots_dir)
+        vis_end_time = time.time()
+        vis_duration = vis_end_time - vis_start_time
+        log_and_print(f"Visualization generation completed in {vis_duration:.2f} seconds", log_file)
 
 def train_one_epoch(model, train_loader, criterion, optimizer, device):
     """
