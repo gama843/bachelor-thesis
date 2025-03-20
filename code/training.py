@@ -119,6 +119,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         
         log_and_print(f"\nTraining and evaluation completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}", log_file)
 
+    with open(log_path, "a") as log_file:
         # generate visualizations
         plots_dir = os.path.join(run_folder, "plots")
         os.makedirs(plots_dir, exist_ok=True)
