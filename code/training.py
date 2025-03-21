@@ -3,6 +3,7 @@ import torch
 import time
 import numpy as np
 from plotting import visualize_training_log
+import progressbar
 
 def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder):
     """
@@ -45,6 +46,14 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
     with open(log_path, "w") as log_file:
         log_and_print(f"Training started at: {time.strftime('%Y-%m-%d %H:%M:%S')}", log_file)
         
+        epoch_bar = progressbar.ProgressBar(maxval=num_epochs,
+                                         widgets=[progressbar.Bar('=', '[', ']'), ' ',
+                                                 progressbar.Percentage(), ' ', 
+                                                 'Training ', progressbar.ETA()])
+        
+        print('Training progress:')
+        epoch_bar.start()
+
         for epoch in range(num_epochs):
             epoch_start_time = time.time()
             
@@ -64,7 +73,8 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
             
             epoch_end_time = time.time()
             epoch_duration = epoch_end_time - epoch_start_time
-            
+            epoch_bar.update(epoch + 1)
+
             log_and_print(f"\nEpoch {epoch+1}/{num_epochs}", log_file)
             log_and_print(f"Epoch duration: {epoch_duration:.2f} seconds", log_file)
             log_and_print(f"  Training time: {train_duration:.2f} seconds", log_file)
@@ -84,6 +94,8 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
 
             checkpoint_path = os.path.join(run_folder, f"checkpoint_epoch_{epoch+1}.pth")
             torch.save(model.state_dict(), checkpoint_path)
+
+        epoch_bar.finish()
 
         total_end_time = time.time()
         total_duration = total_end_time - total_start_time
@@ -156,7 +168,14 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
 
-    for images, questions, answers, _, _ in train_loader:
+    batch_bar = progressbar.ProgressBar(maxval=len(train_loader),
+                                      widgets=[progressbar.Bar('=', '[', ']'), ' ',
+                                              progressbar.Percentage(), ' ',
+                                              'Epoch ', progressbar.ETA()])
+    print('Epoch progress:')
+    batch_bar.start()
+
+    for batch_idx, (images, questions, answers, _, _) in enumerate(train_loader):
         images = images.to(device)
         questions = torch.tensor(questions, dtype=torch.long, device=device)
         answers = torch.tensor(answers, dtype=torch.long, device=device)
@@ -168,7 +187,10 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
         optimizer.step()
 
         running_loss += loss.item()
+
+        batch_bar.update(batch_idx + 1)
     
+    batch_bar.finish()
     return running_loss / len(train_loader)
 
 def validate_one_epoch(model, val_loader, criterion, device):

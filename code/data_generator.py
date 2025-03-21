@@ -1239,7 +1239,9 @@ class DataGenerator:
         
         bar = progressbar.ProgressBar(maxval=100,
                                     widgets=[progressbar.Bar('=', '[', ']'), ' ',
-                                            progressbar.Percentage()])
+                                            progressbar.Percentage(), ' ',
+                                            'Generation ', progressbar.ETA()])
+
         print('Data generation started.')
         bar.start()
         
