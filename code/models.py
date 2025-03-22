@@ -1,12 +1,89 @@
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
-from PIL import Image
 import onnx
 import onnxruntime as ort
 from torchvision.models import ResNet18_Weights
 
-class ImageEncoder(nn.Module):
+class CNNImageEncoder(nn.Module):
+    """
+    CNN-based image encoder for Sort-of-CLEVR dataset as described in the paper
+    'A simple neural network module for relational reasoning'.
+    
+    Uses 4 convolutional layers with 32, 64, 128, and 256 kernels respectively,
+    with ReLU activations and batch normalization.
+    
+    Methods:
+    --------
+    forward(image: torch.Tensor) -> torch.Tensor
+        Processes the input image through the CNN to extract feature maps.
+    """
+    def __init__(self, input_channels=3):
+        super(CNNImageEncoder, self).__init__()
+        
+        # 4 convolutional layers as described in the paper
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(input_channels, 32, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU()
+        )
+    
+    def forward(self, image):
+            """
+            Forward pass to extract features from the input image and add coordinate information.
+            
+            Parameters:
+            -----------
+            image : torch.Tensor
+                Input image tensor of shape (batch_size, channels, height, width).
+                For Sort-of-CLEVR, typically (batch_size, 3, 75, 75).
+                
+            Returns:
+            --------
+            objects : torch.Tensor
+                Output tensor with each spatial location as an "object" with content
+                features and coordinate information.
+                Shape: (batch_size, d*d, 256+2) where d*d is the number of cells
+                in the final feature map.
+            """
+            # features 
+            feature_maps = self.conv_layers(image)
+            batch_size, channels, height, width = feature_maps.shape
+            
+            # tagging with normalized spatial coords 
+
+            # 1D tensor [height] -> [height, 1] -> [height, 1] * width 
+            y_coords = torch.linspace(-1, 1, height).unsqueeze(1).expand(height, width)
+
+            # 1D tensor [width] -> [height, width]
+            x_coords = torch.linspace(-1, 1, width).expand(height, width)
+            
+            # reshape coords to match feature map dims
+            coords = torch.stack((y_coords, x_coords), dim=0)  # [2, height, width]
+            coords = coords.unsqueeze(0).expand(batch_size, 2, height, width)
+            
+            # concat feature maps and coordinates along the channel dimension
+            feature_maps_with_coords = torch.cat([feature_maps, coords.to(feature_maps.device)], dim=1)
+            
+            # [batch_size, channels+2, height, width] -> [batch_size, height*width = objects, channels+2 = features + coords]
+            # [batch_size, channels+2, height, width] -> [batch_size, height*width, channels+2]
+            objects = feature_maps_with_coords.permute(0, 2, 3, 1).reshape(batch_size, height*width, channels+2)
+            
+            return objects
+    
+class ResNetImageEncoder(nn.Module):
     """
     ImageEncoder class using a pre-trained ResNet18 model for feature extraction,
     with built-in image preprocessing.
@@ -20,7 +97,7 @@ class ImageEncoder(nn.Module):
     """
 
     def __init__(self):
-        super(ImageEncoder, self).__init__()
+        super(ResNetImageEncoder, self).__init__()
         # uses a pre-trained ResNet18 model, excluding the last fully connected layer
         self.cnn = models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
         self.cnn = nn.Sequential(*list(self.cnn.children())[:-2])
@@ -101,7 +178,7 @@ class QuestionEncoder(nn.Module):
         _, (hidden, _) = self.lstm(embedded)  # only take the hidden state output
 
         # return the last hidden state of the LSTM
-        return hidden[-1].unsqueeze(0)  # shape: (batch_size, hidden_size)
+        return hidden[-1]  # shape: (batch_size, hidden_size)
     
 class RelationalNetwork(nn.Module):
     """
@@ -120,35 +197,39 @@ class RelationalNetwork(nn.Module):
         Performs a forward pass through the network using object features and a question embeddings.
     """
 
-    def __init__(self, feature_dim, question_dim, g_theta_dim, f_phi_dim, num_classes):
+    def __init__(self, question_dim, num_classes):
         """
         Initializes the RelationalNetwork with two MLPs: g_theta and f_phi.
 
         Parameters
         ----------
-        feature_dim : int
-            The dimensionality of the object features.
         question_dim : int
             The dimensionality of the question embedding.
-        g_theta_dim : int
-            The dimensionality of the hidden layer in the g_theta MLP.
-        f_phi_dim : int
-            The dimensionality of the hidden layer in the f_phi MLP.
         num_classes : int
             The number of output classes for the multi-class classification.        
         """
         super(RelationalNetwork, self).__init__()
         
         self.g_theta = nn.Sequential(
-            nn.Linear(2 * feature_dim + question_dim, g_theta_dim),
+            nn.Linear(2 * (256 + 2) + question_dim, 2000),
             nn.ReLU(),
-            nn.Linear(g_theta_dim, g_theta_dim),
+            nn.Linear(2000, 2000),
+            nn.ReLU(),
+            nn.Linear(2000, 2000),
+            nn.ReLU(),
+            nn.Linear(2000, 2000),
             nn.ReLU()
         )
         self.f_phi = nn.Sequential(
-            nn.Linear(g_theta_dim, f_phi_dim),
+            nn.Linear(2000, 2000),
             nn.ReLU(),
-            nn.Linear(f_phi_dim, num_classes)
+            nn.Linear(2000, 1000),
+            nn.ReLU(),
+            nn.Linear(1000, 500),
+            nn.ReLU(),
+            nn.Linear(500, 100),
+            nn.ReLU(),
+            nn.Linear(100, num_classes)
         )
 
     def forward(self, object_features, question_embedding):
@@ -206,12 +287,14 @@ class RelationalReasoningModel(nn.Module):
         Performs a forward pass through the network, processing the image and question to produce an output.
     """
 
-    def __init__(self, vocab_size, embed_size, hidden_size, num_layers, feature_dim, g_theta_dim, f_phi_dim, num_classes):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes):
         """
         Initializes the RelationalReasoningModel with an ImageEncoder, QuestionEncoder, and RelationalNetwork.
 
         Parameters
         ----------
+        img_arch: str
+            The type of image encoder backbone - values: 'cnn' or 'resnet'. 
         vocab_size : int
             The size of the vocabulary used in the QuestionEncoder.
         embed_size : int
@@ -220,19 +303,16 @@ class RelationalReasoningModel(nn.Module):
             The number of features in the hidden state of the LSTM in the QuestionEncoder.
         num_layers : int
             The number of recurrent layers in the LSTM of the QuestionEncoder.
-        feature_dim : int
-            The dimensionality of the object features produced by the ImageEncoder.
-        g_theta_dim : int
-            The dimensionality of the hidden layers in the g_theta MLP of the RelationalNetwork.
-        f_phi_dim : int
-            The dimensionality of the hidden layers in the f_phi MLP of the RelationalNetwork.
         num_classes : int
             The number of output classes for the multi-class classification.
         """
         super(RelationalReasoningModel, self).__init__()
-        self.image_encoder = ImageEncoder()
+        if img_arch == 'cnn':
+            self.image_encoder = CNNImageEncoder()    
+        else:
+            self.image_encoder = ResNetImageEncoder()
         self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
-        self.relation_network = RelationalNetwork(feature_dim, hidden_size, g_theta_dim, f_phi_dim, num_classes)
+        self.relation_network = RelationalNetwork(hidden_size, num_classes)
     
     def forward(self, image, question):
         """
@@ -250,9 +330,9 @@ class RelationalReasoningModel(nn.Module):
         torch.Tensor
             The output tensor, representing the predicted class logits, with shape (batch_size, num_classes).
         """
-        image_features = self.image_encoder(image)
+        object_features = self.image_encoder(image)
         # flatten the spatial dimensions to produce a set of object features
-        object_features = image_features.view(image_features.size(0), -1, image_features.size(1))
+        # object_features = image_features.view(image_features.size(0), -1, image_features.size(1))
         question_embedding = self.question_encoder(question)
         # perform relational reasoning using the object features and question embedding
         output = self.relation_network(object_features, question_embedding)
@@ -265,9 +345,12 @@ class BaselineModel(nn.Module):
     with a simple MLP for classification without a relational network module.
     """
 
-    def __init__(self, vocab_size, embed_size, hidden_size, num_layers, num_classes):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes):
         super(BaselineModel, self).__init__()
-        self.image_encoder = ImageEncoder()
+        if img_arch == 'cnn':
+            self.image_encoder = CNNImageEncoder()    
+        else:
+            self.image_encoder = ResNetImageEncoder()
         self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
         
         # MLP for classification
@@ -294,7 +377,7 @@ class BaselineModel(nn.Module):
         # encode the image and flatten the features
         image_features = self.image_encoder(image)  # shape: (batch_size, 512, 7, 7)
         
-        image_features = image_features.view(image_features.size(0), -1)  # flatten to (batch_size, 512*7*7)
+        image_features = image_features.reshape(image_features.size(0), -1)  # flatten to (batch_size, 512*7*7)
         
         # encode the question
         question_embedding = self.question_encoder(questions)  # shape: (batch_size, hidden_size)
@@ -346,21 +429,21 @@ class ModelConstructor:
         """
         if model_type == 'baseline':
             return BaselineModel(
+                img_arch=kwargs['img_arch'],
                 vocab_size=kwargs['vocab_size'],
                 embed_size=kwargs['embed_size'],
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
                 num_classes=kwargs['num_classes']
+                
             )
         elif model_type == 'relational':
             return RelationalReasoningModel(
+                img_arch=kwargs['img_arch'],
                 vocab_size=kwargs['vocab_size'],
                 embed_size=kwargs['embed_size'],
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
-                feature_dim=kwargs['feature_dim'],
-                g_theta_dim=kwargs['g_theta_dim'],
-                f_phi_dim=kwargs['f_phi_dim'],
                 num_classes=kwargs['num_classes']
             )
         elif model_type == 'onnx':
