@@ -34,29 +34,34 @@ def main():
         # if no arguments are passed, run the default behavior (dataset generation and model training)
         print("No arguments provided. Running default dataset generation and model training.")
         
-        img_dim = 224
-        num_images = 200
-        num_epochs = 15
+        img_dim = 75
+        num_images = 100
+        num_epochs = 5
         batch_size = 64
+        model_type = 'relational'
+        img_arch = 'cnn'
+        note = ''
 
-        generator = DataGenerator('data')
+        today = datetime.datetime.now().strftime("%d%m%Y")       
+        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{note}"
+        data_dir = os.path.join(experiment_dir, 'data')
+
+        generator = DataGenerator(data_dir)
         generator.generate_dataset(img_dim=img_dim, num_images=num_images)
 
-        builder = DatasetBuilder('data', Rotate180DegreesTransform(), 0.5)
+        builder = DatasetBuilder(data_dir)
         train_loader = DataLoader(builder.train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         val_loader = DataLoader(builder.val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         test_loader = DataLoader(builder.test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
 
         model_constructor = ModelConstructor()
         model = model_constructor.load_model(
-            model_type='relational',
+            img_arch=img_arch,
+            model_type=model_type,
             vocab_size=len(builder.vocab),
-            embed_size=128,
-            hidden_size=256,
+            embed_size=32,
+            hidden_size=128,
             num_layers=1,
-            feature_dim=512,  
-            g_theta_dim=256,
-            f_phi_dim=128,
             num_classes=len(builder.answer_vocab)
         )
         
@@ -66,11 +71,7 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        # a unique folder for each run
-        today = datetime.datetime.now().strftime("%d%m%Y")       
-        run_folder = f"models/{today}_{num_images}_{img_dim}"
-
-        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder)
+        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir)
     
     else:
         # handle the provided arguments logic
