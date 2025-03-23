@@ -355,9 +355,11 @@ class RelationalReasoningModel(nn.Module):
         
         if question_form == 'string':
             self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
-        else:
+        elif question_form == 'binary':
             self.question_encoder = BinaryQuestionEncoder()
             hidden_size = 11
+        else:
+            raise ValueError(f"Unsupported question form: {question_form}")  
 
         self.relation_network = RelationalNetwork(hidden_size, num_classes)
     
