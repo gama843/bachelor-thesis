@@ -5,7 +5,7 @@ import numpy as np
 from plotting import visualize_training_log
 import progressbar
 
-def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder):
+def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form):
     """
     Handles training, validation, logging, and model saving with metrics matching the paper.
 
@@ -59,14 +59,14 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
             
             # training phase
             train_start_time = time.time()
-            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
+            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device, question_form)
             train_end_time = time.time()
             train_duration = train_end_time - train_start_time
             
             # validation phase
             val_start_time = time.time()
             val_loss, val_accuracy, breakdown, subtype_accuracy = validate_one_epoch(
-                model, val_loader, criterion, device
+                model, val_loader, criterion, device, question_form
             )
             val_end_time = time.time()
             val_duration = val_end_time - val_start_time
@@ -104,7 +104,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         log_and_print("\nEvaluating on test set...", log_file)
         test_start_time = time.time()
         test_loss, test_accuracy, test_breakdown, test_subtype_accuracy = validate_one_epoch(
-            model, test_loader, criterion, device
+            model, test_loader, criterion, device, question_form
         )
         test_end_time = time.time()
         test_duration = test_end_time - test_start_time
@@ -143,7 +143,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         vis_duration = vis_end_time - vis_start_time
         log_and_print(f"Visualization generation completed in {vis_duration:.2f} seconds", log_file)
 
-def train_one_epoch(model, train_loader, criterion, optimizer, device):
+def train_one_epoch(model, train_loader, criterion, optimizer, device, question_form):
     """
     Train the model for one epoch.
     
@@ -159,6 +159,8 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
         The optimizer for model parameters.
     device : torch.device
         Device where the model is placed (CPU or CUDA).
+    question_form : str
+        Form of the question - can be 'binary' or 'string'.
     
     Returns:
     --------
@@ -175,9 +177,12 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
     print('Epoch progress:')
     batch_bar.start()
 
-    for batch_idx, (images, questions, answers, _, _) in enumerate(train_loader):
+    for batch_idx, (images, questions, binary_questions, answers, _, _) in enumerate(train_loader):
         images = images.to(device)
-        questions = torch.tensor(questions, dtype=torch.long, device=device)
+        if question_form == 'string':
+            questions = torch.tensor(questions, dtype=torch.long, device=device)
+        else:
+            questions = binary_questions.to(device)
         answers = torch.tensor(answers, dtype=torch.long, device=device)
 
         optimizer.zero_grad()
@@ -193,7 +198,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
     batch_bar.finish()
     return running_loss / len(train_loader)
 
-def validate_one_epoch(model, val_loader, criterion, device):
+def validate_one_epoch(model, val_loader, criterion, device, question_form):
     """
     Validate the model on the validation dataset with metrics matching the original paper.
 
@@ -232,12 +237,19 @@ def validate_one_epoch(model, val_loader, criterion, device):
     all_question_subtypes = []
 
     with torch.no_grad():
-        for images, questions, answers, q_types, q_subtypes in val_loader:
+        for images, questions, binary_questions, answers, q_types, q_subtypes in val_loader:
             images = images.to(device)
             questions = torch.tensor(questions, dtype=torch.long, device=device)
+            binary_questions = binary_questions.to(device)
             answers = torch.tensor(answers, dtype=torch.long, device=device)
             
-            outputs = model(images, questions)
+            if question_form == 'string':
+                outputs = model(images, questions)
+            elif question_form == 'binary':
+                outputs = model(images, binary_questions)
+            else:
+                raise ValueError(f"Unsupported question form: {question_form}")
+            
             loss = criterion(outputs, answers)
             running_loss += loss.item()
             

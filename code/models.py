@@ -179,7 +179,47 @@ class QuestionEncoder(nn.Module):
 
         # return the last hidden state of the LSTM
         return hidden[-1]  # shape: (batch_size, hidden_size)
-    
+
+class BinaryQuestionEncoder(nn.Module):
+    """
+    Module for encoding binary questions as used in the Sort-of-CLEVR dataset.
+    Converts binary question vectors to tensors for use with the RelationalNetwork.
+    """
+    def __init__(self, binary_length=11):
+        """
+        Initializes the BinaryQuestionEncoder.
+        
+        Parameters:
+        -----------
+        binary_length : int
+            The length of the binary vector representing questions.
+            For Sort-of-CLEVR, this is 11 (6 bits for color, 5 bits for question type).
+        """
+        super(BinaryQuestionEncoder, self).__init__()
+        self.binary_length = binary_length
+        
+    def forward(self, binary_questions):
+        """
+        Processes binary question vectors.
+        
+        Parameters:
+        ----------
+        binary_questions : torch.Tensor
+            Tensor of binary question vectors with shape (batch_size, binary_length).
+            
+        Returns:
+        -------
+        torch.Tensor
+            The same tensor, ensuring it has the correct dtype and device.
+        """
+
+        if not isinstance(binary_questions, torch.Tensor):
+            binary_questions = torch.tensor(binary_questions, dtype=torch.float)
+        elif binary_questions.dtype != torch.float:
+            binary_questions = binary_questions.float()
+            
+        return binary_questions 
+        
 class RelationalNetwork(nn.Module):
     """
     Module for relational reasoning, composed of two MLPs (g_theta and f_phi).
@@ -287,7 +327,7 @@ class RelationalReasoningModel(nn.Module):
         Performs a forward pass through the network, processing the image and question to produce an output.
     """
 
-    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form):
         """
         Initializes the RelationalReasoningModel with an ImageEncoder, QuestionEncoder, and RelationalNetwork.
 
@@ -307,11 +347,18 @@ class RelationalReasoningModel(nn.Module):
             The number of output classes for the multi-class classification.
         """
         super(RelationalReasoningModel, self).__init__()
+        
         if img_arch == 'cnn':
             self.image_encoder = CNNImageEncoder()    
         else:
             self.image_encoder = ResNetImageEncoder()
-        self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
+        
+        if question_form == 'string':
+            self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
+        else:
+            self.question_encoder = BinaryQuestionEncoder()
+            hidden_size = 11
+
         self.relation_network = RelationalNetwork(hidden_size, num_classes)
     
     def forward(self, image, question):
@@ -434,7 +481,8 @@ class ModelConstructor:
                 embed_size=kwargs['embed_size'],
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
-                num_classes=kwargs['num_classes']
+                num_classes=kwargs['num_classes'],
+                question_form=kwargs['question_form']
                 
             )
         elif model_type == 'relational':
@@ -444,7 +492,8 @@ class ModelConstructor:
                 embed_size=kwargs['embed_size'],
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
-                num_classes=kwargs['num_classes']
+                num_classes=kwargs['num_classes'],
+                question_form=kwargs['question_form']
             )
         elif model_type == 'onnx':
             return self._load_custom_model_onnx(kwargs['onnx_path'])

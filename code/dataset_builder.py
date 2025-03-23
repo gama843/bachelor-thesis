@@ -28,18 +28,20 @@ def collate_fn(batch):
         A tuple containing:
         - images (Tensor): Batch of images.
         - questions (Tensor): Padded batch of tokenized questions.
+        - binary_questions: Batch of binary questions. 
         - answers (Tensor): Batch of encoded answers.
         - question_types (list): List of question types ('relational' or 'non-relational').
         - question_subtypes (list): List of question subtypes (e.g., 'topbottom', 'closest').
     """
-    images, questions, answers, question_types, question_subtypes = zip(*batch)
+    images, questions, binary_questions, answers, question_types, question_subtypes = zip(*batch)
 
     images = torch.stack(images)
     questions = [torch.tensor(q, dtype=torch.long) for q in questions]
     questions = pad_sequence(questions, batch_first=True, padding_value=0)
+    binary_questions = torch.stack(binary_questions)
     answers = torch.tensor(answers, dtype=torch.long)
 
-    return images, questions, answers, list(question_types), list(question_subtypes)
+    return images, questions, binary_questions, answers, list(question_types), list(question_subtypes)
 
 class DatasetBuilder:
     def __init__(self, data_dir, transform=None, transform_prob=0, random_seed=42):
@@ -254,6 +256,7 @@ class RelationalDataset(Dataset):
             A tuple (image, tokenized_question, encoded_answer, question_type, question_subtype) where:
             - image: Transformed image tensor.
             - tokenized_question: List of token indices.
+            - binary_question: Binary vector tensor representing the question.
             - encoded_answer: Integer index.
             - question_type: 'relational' or 'non-relational'.
             - question_subtype: Specific subtype of the question.
@@ -267,6 +270,7 @@ class RelationalDataset(Dataset):
 
         img = transforms.ToTensor()(img)
         tokenized_question = self._tokenize_question(question)
+        binary_question = torch.tensor(question_vector, dtype=torch.float)
         encoded_answer = self._encode_answer(answer)
 
         question_type = "relational" if question_vector[6] == 1 else "non-relational"
@@ -290,7 +294,7 @@ class RelationalDataset(Dataset):
             else:
                 raise ValueError("Unknown non-relational question subtype")
 
-        return img, tokenized_question, encoded_answer, question_type, question_subtype
+        return img, tokenized_question, binary_question, encoded_answer, question_type, question_subtype
 
     def _tokenize_question(self, question):
         """

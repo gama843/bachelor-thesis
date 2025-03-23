@@ -35,15 +35,18 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 100
-        num_epochs = 5
+        num_images = 10000
+        num_epochs = 15
         batch_size = 64
         model_type = 'relational'
         img_arch = 'cnn'
+        question_form = 'binary'
         note = ''
 
         today = datetime.datetime.now().strftime("%d%m%Y")       
-        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{note}"
+        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}"
+        if note:
+            experiment_dir + '_' + note
         data_dir = os.path.join(experiment_dir, 'data')
 
         generator = DataGenerator(data_dir)
@@ -62,7 +65,8 @@ def main():
             embed_size=32,
             hidden_size=128,
             num_layers=1,
-            num_classes=len(builder.answer_vocab)
+            num_classes=len(builder.answer_vocab),
+            question_form=question_form
         )
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,7 +75,7 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir)
+        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
     
     else:
         # handle the provided arguments logic
