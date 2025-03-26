@@ -294,6 +294,8 @@ class RelationalNetwork(nn.Module):
         if question_embedding.dim() == 3:  # shape: [1, batch_size, question_dim]
             question_embedding = question_embedding.squeeze(0)
 
+        print(num_objects, "objects extracted by the image encoder.")
+
         for i in range(num_objects):
             for j in range(num_objects):
                 if i != j:

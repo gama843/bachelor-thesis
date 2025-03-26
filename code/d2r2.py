@@ -1,17 +1,29 @@
 import argparse
 import torch
-import torch.optim as optim
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from data_generator import DataGenerator
-from models import ModelConstructor
-from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
-from training import validate_one_epoch, train_and_validate
+import numpy as np
+import random
 import os
 import datetime
 import warnings
 
 warnings.filterwarnings("ignore")
+
+random_seed = 42
+
+random.seed(random_seed)
+np.random.seed(random_seed)
+torch.manual_seed(random_seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(random_seed)
+
+from torch.utils.data import DataLoader
+import torch.optim as optim
+import torch.nn as nn    
+
+from data_generator import DataGenerator
+from models import ModelConstructor
+from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
+from training import validate_one_epoch, train_and_validate    
 
 def main():
     parser = argparse.ArgumentParser(
@@ -41,13 +53,13 @@ def main():
         model_type = 'relational'
         img_arch = 'cnn'
         question_form = 'binary'
-        note = ''
+        note = '2'
         continue_training = True
 
         today = datetime.datetime.now().strftime("%d%m%Y")       
         experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}"
         if note:
-            experiment_dir + '_' + note
+            experiment_dir += '_' + note
         data_dir = os.path.join(experiment_dir, 'data')
 
         generator = DataGenerator(data_dir)
