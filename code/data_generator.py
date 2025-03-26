@@ -156,12 +156,15 @@ class DataGenerator:
         """
         thickness = -1 if fill else np.random.randint(1, 3)
         outline_thickness = 1
+        side_length = self.img_dim // 8
 
-        x1 = np.random.randint(0 + outline_thickness, self.img_dim // 2 - outline_thickness)
-        y1 = np.random.randint(0 + outline_thickness, self.img_dim // 2 - outline_thickness)
+        max_x = self.img_dim - side_length - outline_thickness
+        max_y = self.img_dim - side_length - outline_thickness        
+
+        x1 = np.random.randint(outline_thickness, max_x)
+        y1 = np.random.randint(outline_thickness, max_y)
 
         # side_length = np.random.randint(10, self.img_dim / 2 - thickness)
-        side_length = self.img_dim // 8
 
         x2 = x1 + side_length
         y2 = y1 + side_length
