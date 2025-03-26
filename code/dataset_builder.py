@@ -2,7 +2,7 @@ import os
 import json
 import random
 import pickle
-from collections import Counter
+from collections import Counter, OrderedDict
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -133,6 +133,33 @@ class DatasetBuilder:
                 if 'question' in obj_info:
                     samples.append((os.path.join(self.data_dir, image_path), obj_info['question'], obj_info['answer'], obj_info['question_vector']))
         return samples
+    
+    def compute_answer_distribution(self, samples):
+        """
+        Computes the distribution of answers in a set of samples.
+        
+        Parameters:
+        -----------
+        samples : list
+            A list of samples where each sample is a tuple (image_path, question, answer, question_vector).
+        
+        Returns:
+        --------
+        dict
+            An OrderedDict with answers as keys and their normalized weights as values, sorted by weight in descending order.
+        """
+        answer_counts = {}
+        for _, _, answer, _ in samples:
+            if answer in answer_counts:
+                answer_counts[answer] += 1
+            else:
+                answer_counts[answer] = 1
+        
+        total_count = len(samples)
+        answer_weights = {answer: count / total_count for answer, count in answer_counts.items()}
+        sorted_weights = OrderedDict(sorted(answer_weights.items(), key=lambda x: x[1], reverse=True))
+        
+        return sorted_weights
 
     def _compute_max_question_len(self, samples):
         """

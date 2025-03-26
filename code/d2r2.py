@@ -8,13 +8,13 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-random_seed = 42
+# random_seed = 1
 
-random.seed(random_seed)
-np.random.seed(random_seed)
-torch.manual_seed(random_seed)
-if torch.cuda.is_available():
-    torch.cuda.manual_seed_all(random_seed)
+# random.seed(random_seed)
+# np.random.seed(random_seed)
+# torch.manual_seed(random_seed)
+# if torch.cuda.is_available():
+#     torch.cuda.manual_seed_all(random_seed)
 
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -23,7 +23,7 @@ import torch.nn as nn
 from data_generator import DataGenerator
 from models import ModelConstructor
 from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
-from training import validate_one_epoch, train_and_validate    
+from training import validate_one_epoch, train_and_validate, save_train_answer_distribution
 
 def main():
     parser = argparse.ArgumentParser(
@@ -54,7 +54,7 @@ def main():
         img_arch = 'cnn'
         question_form = 'binary'
         note = '2'
-        continue_training = True
+        continue_training = False
 
         today = datetime.datetime.now().strftime("%d%m%Y")       
         experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}"
@@ -65,16 +65,17 @@ def main():
         generator = DataGenerator(data_dir)
         generator.generate_dataset(img_dim=img_dim, num_images=num_images)
 
-        builder = DatasetBuilder(data_dir)
-        
-        builder.save()
-        print('Dataset builder sucessfully saved.')
-
         if continue_training:
             parent_dir = os.path.dirname(data_dir)
             pickle_path = os.path.join(parent_dir, "dataset_builder.pickle")
             builder = DatasetBuilder.load(pickle_path)
             print('Dataset builder sucessfully loaded.')
+        else:
+            builder = DatasetBuilder(data_dir)
+            builder.save()
+            print('Dataset builder sucessfully saved.')
+        
+        save_train_answer_distribution(experiment_dir, builder)
 
         train_loader = DataLoader(builder.train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         val_loader = DataLoader(builder.val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
@@ -98,7 +99,7 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
+        # train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
     
     else:
         # handle the provided arguments logic
