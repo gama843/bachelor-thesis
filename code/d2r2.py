@@ -35,13 +35,14 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 10000
+        num_images = 100
         num_epochs = 15
         batch_size = 64
         model_type = 'relational'
         img_arch = 'cnn'
         question_form = 'binary'
         note = ''
+        continue_training = True
 
         today = datetime.datetime.now().strftime("%d%m%Y")       
         experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}"
@@ -53,6 +54,16 @@ def main():
         generator.generate_dataset(img_dim=img_dim, num_images=num_images)
 
         builder = DatasetBuilder(data_dir)
+        
+        builder.save()
+        print('Dataset builder sucessfully saved.')
+
+        if continue_training:
+            parent_dir = os.path.dirname(data_dir)
+            pickle_path = os.path.join(parent_dir, "dataset_builder.pickle")
+            builder = DatasetBuilder.load(pickle_path)
+            print('Dataset builder sucessfully loaded.')
+
         train_loader = DataLoader(builder.train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         val_loader = DataLoader(builder.val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         test_loader = DataLoader(builder.test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)

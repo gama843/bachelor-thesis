@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import pickle
 from collections import Counter
 
 import numpy as np
@@ -210,6 +211,23 @@ class DatasetBuilder:
             answer_vocab[ans] = idx
 
         return answer_vocab
+    
+    def save(self):
+        """Save the dataset builder to a file"""
+        
+        parent_dir = os.path.dirname(self.data_dir)
+        pickle_path = os.path.join(parent_dir, "dataset_builder.pickle")
+        
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(self, f)
+        
+        return pickle_path
+    
+    @classmethod
+    def load(cls, filepath):
+        """Load a dataset builder from a file"""
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)
     
 class RelationalDataset(Dataset):
     """
