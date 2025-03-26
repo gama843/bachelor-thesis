@@ -201,7 +201,7 @@ class DataGenerator:
             Bounding box coordinates ((bb_x1, bb_y1), (bb_x2, bb_y2)).
         """
 
-        scale = 4
+        scale = 8
         img_dim = self.img_dim
         high_res_dim = img_dim * scale
 
