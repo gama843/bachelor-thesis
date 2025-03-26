@@ -155,14 +155,24 @@ class DataGenerator:
             ((x1, y1), (x2, y2)).
         """
         thickness = -1 if fill else np.random.randint(1, 3)
+        outline_thickness = 1
 
-        x1 = np.random.randint(0 + thickness, self.img_dim / 2 - thickness)
-        y1 = np.random.randint(0 + thickness, self.img_dim / 2 - thickness)
+        x1 = np.random.randint(0 + outline_thickness, self.img_dim // 2 - outline_thickness)
+        y1 = np.random.randint(0 + outline_thickness, self.img_dim // 2 - outline_thickness)
 
-        side_length = np.random.randint(10, self.img_dim / 2 - thickness)
+        # side_length = np.random.randint(10, self.img_dim / 2 - thickness)
+        side_length = self.img_dim // 8
 
         x2 = x1 + side_length
         y2 = y1 + side_length
+
+        cv2.rectangle(
+            img,
+            (x1 - outline_thickness, y1 - outline_thickness),
+            (x2 + outline_thickness, y2 + outline_thickness),
+            (255, 255, 255),
+            -1 if fill else outline_thickness
+        )
 
         cv2.rectangle(img, (x1, y1), (x2, y2), color, thickness)
         
@@ -172,37 +182,75 @@ class DataGenerator:
         """
         @public
 
-        Generate a circle on the given image with the specified color and fill.
+        Generate a smooth, anti-aliased circle by drawing at high resolution and downscaling.
 
         Parameters:
         -----------
         img : numpy.ndarray
             The input image on which to draw the circle.
         color : tuple
-            A tuple representing the color of the circle in BGR format (e.g., (255, 0, 0) for blue).
+            The color of the circle in BGR format.
         fill : bool
-            A boolean indicating whether the circle should be filled (True) or outlined (False).
+            Whether the circle should be filled (True) or outlined (False).
 
         Returns:
         --------
         img : numpy.ndarray
-            The image with the circle drawn on it.
+            The image with the smooth circle drawn.
         bbox : tuple
-            A tuple containing two points that represent the bounding box of the circle
-            ((bb_x1, bb_y1), (bb_x2, bb_y2)).
+            Bounding box coordinates ((bb_x1, bb_y1), (bb_x2, bb_y2)).
         """
-        radius = np.random.randint(5, self.img_dim // 7)
-        thickness = -1 if fill else np.random.randint(1, 3)
 
-        center_coordinates = (np.random.randint(1 + radius + thickness, self.img_dim - radius - thickness - 1),
-                            np.random.randint(1 + radius + thickness, self.img_dim - radius - thickness - 1))
-        cv2.circle(img, center_coordinates, radius, color, thickness)
-        bb_x1 = center_coordinates[0] - radius
-        bb_y1 = center_coordinates[1] - radius
-        bb_x2 = center_coordinates[0] + radius
-        bb_y2 = center_coordinates[1] + radius
-        
-        return img, ((bb_x1, bb_y1), (bb_x2, bb_y2))    
+        scale = 4
+        img_dim = self.img_dim
+        high_res_dim = img_dim * scale
+
+        high_res_img = np.zeros((high_res_dim, high_res_dim, 3), dtype=np.uint8)
+
+        diameter = img_dim // 7
+        radius = (diameter // 2) * scale
+        outline_thickness = scale
+
+        thickness = -1 if fill else np.random.randint(1, 3) * scale
+
+        center_coordinates = (
+            np.random.randint(radius + outline_thickness, high_res_dim - radius - outline_thickness),
+            np.random.randint(radius + outline_thickness, high_res_dim - radius - outline_thickness)
+        )
+
+        cv2.circle(
+            high_res_img,
+            center_coordinates,
+            radius + outline_thickness,
+            (255, 255, 255),
+            -1 if fill else outline_thickness
+        )
+
+        cv2.circle(
+            high_res_img,
+            center_coordinates,
+            radius,
+            color,
+            thickness
+        )
+
+        # downscale with anti-aliasing
+        downscaled_img = cv2.resize(high_res_img, (img_dim, img_dim), interpolation=cv2.INTER_AREA)
+
+        # merge the downscaled circle with the original img
+        mask = downscaled_img > 0
+        img[mask] = downscaled_img[mask]
+
+        # compute bounding box coordinates in original resolution
+        center_coordinates_low_res = (center_coordinates[0] // scale, center_coordinates[1] // scale)
+        radius_low_res = radius // scale
+
+        bb_x1 = center_coordinates_low_res[0] - radius_low_res
+        bb_y1 = center_coordinates_low_res[1] - radius_low_res
+        bb_x2 = center_coordinates_low_res[0] + radius_low_res
+        bb_y2 = center_coordinates_low_res[1] + radius_low_res
+
+        return img, ((bb_x1, bb_y1), (bb_x2, bb_y2)) 
     
     def _gen_triangle(self, img, color, fill):
         """
@@ -645,7 +693,7 @@ class DataGenerator:
             True if the bounding boxes overlap, False otherwise.
         """
         # check if two bounding boxes overlap with an offset applied to all sides
-        offset = 3
+        offset = 5
 
         expanded_box1 = ((box1[0][0] - offset, box1[0][1] - offset), (box1[1][0] + offset, box1[1][1] + offset))
         expanded_box2 = ((box2[0][0] - offset, box2[0][1] - offset), (box2[1][0] + offset, box2[1][1] + offset))
@@ -1218,10 +1266,10 @@ class DataGenerator:
 
         if shapes is None:
             shapes = {
-                "rectangle": self._gen_rectangle,
+                # "rectangle": self._gen_rectangle,
                 "circle": self._gen_circle,
-                "triangle": self._gen_triangle,
-                "pentagon": self._gen_pentagon,
+                # "triangle": self._gen_triangle,
+                # "pentagon": self._gen_pentagon,
                 "square": self._gen_square
             }
         
