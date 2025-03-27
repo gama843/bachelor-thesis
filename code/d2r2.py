@@ -23,7 +23,7 @@ import torch.nn as nn
 from data_generator import DataGenerator
 from models import ModelConstructor
 from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
-from training import validate_one_epoch, train_and_validate, save_train_answer_distribution
+from training import validate_one_epoch, train_and_validate, save_train_answer_distribution, compute_baseline_performance
 
 def main():
     parser = argparse.ArgumentParser(
@@ -47,8 +47,8 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 100
-        num_epochs = 15
+        num_images = 50
+        num_epochs = 5
         batch_size = 64
         model_type = 'relational'
         img_arch = 'cnn'
@@ -80,6 +80,7 @@ def main():
         train_loader = DataLoader(builder.train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         val_loader = DataLoader(builder.val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
         test_loader = DataLoader(builder.test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=4, pin_memory=True)
+        compute_baseline_performance(test_loader, builder.answer_vocab, experiment_dir)
 
         model_constructor = ModelConstructor()
         model = model_constructor.load_model(
@@ -99,7 +100,7 @@ def main():
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        # train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
+        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
     
     else:
         # handle the provided arguments logic

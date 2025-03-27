@@ -194,6 +194,10 @@ def visualize_training_log(log_path, output_dir=None):
     parsed_data = parse_training_log(log_path)
     epochs_df, test_df = create_dataframes(parsed_data)
     
+    # load baseline performance log as horizontal lines in accuracy plots
+    baseline_log_path = Path(log_path).with_name("baseline_performance.txt")
+    baseline_data = parse_log_file(str(baseline_log_path))
+    
     # define column lists for plots
     rel_subtype_cols = [col for col in epochs_df.columns if col.startswith('acc_relational_')]
     non_rel_subtype_cols = [col for col in epochs_df.columns if col.startswith('acc_non-relational_')]
@@ -233,16 +237,37 @@ def visualize_training_log(log_path, output_dir=None):
     plt.plot(epochs_df['epoch'], epochs_df['validation_accuracy'], 'o-', label='validation accuracy', linewidth=2)
     if test_df is not None and 'accuracy' in test_df.columns:
         last_x = epochs_df['epoch'].iloc[-1]
-        plt.plot(last_x + 0.25, test_df['accuracy'].iloc[0], 's', 
+        plt.plot(last_x + 0.25, test_df['accuracy'].iloc[0], 's',
                 markersize=10, markeredgewidth=2, color='red',
                 label=f'test accuracy: {test_df["accuracy"].iloc[0]:.4f}')
+
+    # baseline horizontal lines for overall accuracy with direct text labels
+    overall_baselines = baseline_data["Overall accuracy"]
+    # Keep track of used y-positions to avoid label overlap
+    used_y_positions = {}
+
+    for label, value in overall_baselines.items():
+        x_pos = min(epochs_df['epoch'])
+        for y_val in used_y_positions:
+            if abs(y_val - value) < 0.02:
+                x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+        used_y_positions[value] = x_pos
+
+        if "random guessing" in label.lower():
+            plt.axhline(y=value, linestyle="--", color="gray")
+            plt.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="gray", fontsize=8)
+        elif "most frequent class" in label.lower():
+            plt.axhline(y=value, linestyle="--", color="black")
+            plt.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="black", fontsize=8)
+        elif "empirical distribution sampling" in label.lower():
+            plt.axhline(y=value, linestyle="--", color="purple")
+            plt.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="purple", fontsize=8)
+
     plt.title('Validation accuracy per epoch')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.xticks(epochs_df['epoch'])
-    plt.ylim(0, max(epochs_df['validation_accuracy'].max() * 1.1, 
-                   test_df['accuracy'].iloc[0] * 1.1 if test_df is not None and 'accuracy' in test_df.columns else 0))
-    plt.legend()
+    plt.legend(loc='upper left')
     plt.grid(True)
     if output_dir:
         plt.savefig(output_path / 'accuracy_curve.png', dpi=300, bbox_inches='tight')
@@ -252,41 +277,64 @@ def visualize_training_log(log_path, output_dir=None):
     
     # plot 3: accuracy by question type
     type_cols = [col for col in epochs_df.columns if col.startswith('acc_') and '_' not in col.replace('acc_', '', 1)]
-    
     if type_cols:
         plt.figure(figsize=(10, 6))
-        
-        # custom legend
+        # custom legend - only for actual data lines
         legend_elements = []
-        
         for col in type_cols:
             type_name = col.replace('acc_', '')
             line = plt.plot(epochs_df['epoch'], epochs_df[col], 'o-', linewidth=2)[0]
             line_color = line.get_color()
-
             test_value = f": {test_df[col].iloc[0]:.4f}" if test_df is not None and col in test_df.columns else ""
             legend_label = f"{type_name.lower()} (test{test_value})"
-            
-            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color, 
-                                              markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
-                                  legend_label))
-            
+            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color,
+                                            markeredgecolor=line_color, markersize=10, markeredgewidth=2),
+                                legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0], 
+                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
-                        
+        
+    if baseline_data is not None and "Accuracy by question type" in baseline_data:
+        type_baselines = baseline_data["Accuracy by question type"]
+        
+        # keep track of y-positions to avoid overlap
+        used_y_positions = {}
+        
+        for type_name, baselines in type_baselines.items():
+            linestyle = "--" if type_name == list(type_baselines.keys())[0] else ":"
+            
+            for baseline_label, value in baselines.items():
+                # only process most frequent class baselines due to visual clutter
+                if "most frequent class" in baseline_label.lower():
+                    # determine x-position based on potential overlap
+                    x_pos = min(epochs_df['epoch'])
+                    
+                    # if y-value is close to an existing label, shift x-position right
+                    for y_val in used_y_positions.keys():
+                        if abs(y_val - value) < 0.02:
+                            x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                    
+                    used_y_positions[value] = x_pos
+                    
+                    plt.axhline(y=value, linestyle=linestyle, color="black")
+                    plt.text(x_pos, value + 0.003, f"{type_name} most frequest class", 
+                        va='bottom', color="black", fontsize=8)
+        
         plt.title('Validation accuracy by question type')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.xticks(epochs_df['epoch'])
         plt.ylim(0, max(epochs_df[type_cols].max().max() * 1.1,
-                       test_df[type_cols].max().max() * 1.1 if test_df is not None else 0))
+                    test_df[type_cols].max().max() * 1.1 if test_df is not None else 0))
         
-        plt.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
-                 labels=[elements[2] for elements in legend_elements],
-                 handler_map={tuple: HandlerTuple(ndivide=None)})
-        
+        line_handles = [tuple(elements[:2]) for elements in legend_elements]
+        line_labels = [elements[2] for elements in legend_elements]
+                
+        plt.legend(handles=line_handles, labels=line_labels, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left')
         plt.grid(True)
+        
+        plt.subplots_adjust(left=0.15)
+        
         if output_dir:
             plt.savefig(output_path / 'accuracy_by_type.png', dpi=300, bbox_inches='tight')
             plt.close()
@@ -295,37 +343,48 @@ def visualize_training_log(log_path, output_dir=None):
     
     if rel_subtype_cols:
         plt.figure(figsize=(10, 6))
-
         legend_elements = []
-        
         for col in rel_subtype_cols:
             subtype = col.replace('acc_relational_', '')
-
             line = plt.plot(epochs_df['epoch'], epochs_df[col], 'o-', linewidth=2)[0]
             line_color = line.get_color()
-            
             test_value = f": {test_df[col].iloc[0]:.4f}" if test_df is not None and col in test_df.columns else ""
             legend_label = f"{subtype.lower()} (test{test_value})"
-            
-            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color, 
-                                              markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
-                                  legend_label))
-            
+            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color,
+                                            markeredgecolor=line_color, markersize=10, markeredgewidth=2),
+                                legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0], 
+                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
+
+        subtype_baselines = baseline_data["Accuracy by question subtype"]
+        if "relational" in subtype_baselines:
+            used_y_positions = {}
+            
+            for subtype, baselines in subtype_baselines["relational"].items():
+                for baseline_label, value in baselines.items():
+                    if "most frequent class" in baseline_label.lower():
+                        x_pos = min(epochs_df['epoch'])
                         
+                        for y_val in used_y_positions.keys():
+                            if abs(y_val - value) < 0.02:
+                                x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                        
+                        used_y_positions[value] = x_pos
+                        
+                        plt.axhline(y=value, linestyle="--", color="black")
+                        plt.text(x_pos, value + 0.003, f"{subtype} most frequent class", 
+                            va='bottom', color="black", fontsize=8)
+
         plt.title('Validation accuracy by relational question subtype')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.xticks(epochs_df['epoch'])
         plt.ylim(0, max(epochs_df[rel_subtype_cols].max().max() * 1.1,
-                       test_df[rel_subtype_cols].max().max() * 1.1 if test_df is not None else 0))
-        
+                    test_df[rel_subtype_cols].max().max() * 1.1 if test_df is not None else 0))
         plt.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
-                 labels=[elements[2] for elements in legend_elements],
-                 handler_map={tuple: HandlerTuple(ndivide=None)})
-        
+                labels=[elements[2] for elements in legend_elements],
+                handler_map={tuple: HandlerTuple(ndivide=None)})
         plt.grid(True)
         if output_dir:
             plt.savefig(output_path / 'accuracy_relational_subtypes.png', dpi=300, bbox_inches='tight')
@@ -335,36 +394,44 @@ def visualize_training_log(log_path, output_dir=None):
 
     if non_rel_subtype_cols:
         plt.figure(figsize=(10, 6))
-
         legend_elements = []
-        
         for col in non_rel_subtype_cols:
             subtype = col.replace('acc_non-relational_', '')
-            line = plt.plot(epochs_df['epoch'], epochs_df[col], 'o-', linewidth=2)[0]
+            line = plt.plot(epochs_df['epoch'], epochs_df[col], 's-', linewidth=2)[0]
             line_color = line.get_color()
-            
             test_value = f": {test_df[col].iloc[0]:.4f}" if test_df is not None and col in test_df.columns else ""
             legend_label = f"{subtype.lower()} (test{test_value})"
-            
-            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color, 
-                                              markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
-                                  legend_label))
-            
+            legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color,
+                                            markeredgecolor=line_color, markersize=10, markeredgewidth=2),
+                                legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0], 
+                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
-                        
+        
+        subtype_baselines = baseline_data["Accuracy by question subtype"]
+        if "non-relational" in subtype_baselines:
+            used_y_positions = {}
+            for subtype, baselines in subtype_baselines["non-relational"].items():
+                for baseline_label, value in baselines.items():
+                    if "most frequent class" in baseline_label.lower():
+                        x_pos = min(epochs_df['epoch'])
+                        for y_val in used_y_positions.keys():
+                            if abs(y_val - value) < 0.02:
+                                x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                        used_y_positions[value] = x_pos
+                        plt.axhline(y=value, linestyle="--", color="black")
+                        plt.text(x_pos, value + 0.003, f"{subtype} most frequent class",
+                            va='bottom', color="black", fontsize=8)
+        
         plt.title('Validation accuracy by non-relational question subtype')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.xticks(epochs_df['epoch'])
         plt.ylim(0, max(epochs_df[non_rel_subtype_cols].max().max() * 1.1,
-                       test_df[non_rel_subtype_cols].max().max() * 1.1 if test_df is not None else 0))
-        
+                    test_df[non_rel_subtype_cols].max().max() * 1.1 if test_df is not None else 0))
         plt.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
-                 labels=[elements[2] for elements in legend_elements],
-                 handler_map={tuple: HandlerTuple(ndivide=None)})
-        
+                labels=[elements[2] for elements in legend_elements],
+                handler_map={tuple: HandlerTuple(ndivide=None)})
         plt.grid(True)
         if output_dir:
             plt.savefig(output_path / 'accuracy_non_relational_subtypes.png', dpi=300, bbox_inches='tight')
@@ -375,106 +442,135 @@ def visualize_training_log(log_path, output_dir=None):
     # dashboard
     plt.figure(figsize=(20, 16))
     gs = gridspec.GridSpec(3, 2, figure=plt.gcf())
-    
+
     # plot 1: training and validation losses (top left)
     ax1 = plt.subplot(gs[0, 0])
     ax1.plot(epochs_df['epoch'], epochs_df['training_loss'], 'o-', label='training loss', linewidth=2)
     ax1.plot(epochs_df['epoch'], epochs_df['validation_loss'], 's-', label='validation loss', linewidth=2)
-    
+
     if test_df is not None and 'loss' in test_df.columns:
         test_loss = test_df['loss'].iloc[0]
         last_x = epochs_df['epoch'].iloc[-1]
         ax1.plot(last_x + 0.25, test_loss, 's', markersize=10, markeredgewidth=2, 
                 color='red', label=f'test loss: {test_loss:.4f}')
-    
+
     ax1.set_title('Training and validation loss')
     ax1.set_xlabel('Epoch')
     ax1.set_ylabel('Loss')
     ax1.set_xticks(epochs_df['epoch'])
     ax1.legend()
     ax1.grid(True)
-    
+
     # plot 2: overall validation accuracy (top right)
     ax2 = plt.subplot(gs[0, 1])
-    legend_elements_acc = []
-    
-    validation_acc_line = ax2.plot(epochs_df['epoch'], epochs_df['validation_accuracy'], 'o-', linewidth=2)[0]
-    legend_elements_acc.append(validation_acc_line)
-    
+    ax2.plot(epochs_df['epoch'], epochs_df['validation_accuracy'], 'o-', linewidth=2, label='validation accuracy')
+
     if test_df is not None and 'accuracy' in test_df.columns:
         test_acc = test_df['accuracy'].iloc[0]
         last_x = epochs_df['epoch'].iloc[-1]
-        test_acc_marker = ax2.plot(last_x + 0.25, test_acc, 's', markersize=10, markeredgewidth=2,
-                color='red')[0]
-        legend_elements_acc.append(test_acc_marker)
-    
+        ax2.plot(last_x + 0.25, test_acc, 's', markersize=10, markeredgewidth=2,
+                color='red', label=f'test accuracy: {test_acc:.4f}')
+
+    overall_baselines = baseline_data["Overall accuracy"]
+    used_y_positions = {}
+
+    for label, value in overall_baselines.items():
+        x_pos = min(epochs_df['epoch'])
+        for y_val in used_y_positions:
+            if abs(y_val - value) < 0.02:
+                x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+        used_y_positions[value] = x_pos
+
+        if "random guessing" in label.lower():
+            ax2.axhline(y=value, linestyle="--", color="gray")
+            ax2.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="gray", fontsize=8)
+        elif "most frequent class" in label.lower():
+            ax2.axhline(y=value, linestyle="--", color="black")
+            ax2.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="black", fontsize=8)
+        elif "empirical distribution sampling" in label.lower():
+            ax2.axhline(y=value, linestyle="--", color="purple")
+            ax2.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="purple", fontsize=8)
+
     ax2.set_title('Overall validation accuracy')
     ax2.set_xlabel('Epoch')
     ax2.set_ylabel('Accuracy')
     ax2.set_xticks(epochs_df['epoch'])
     ax2.set_ylim(0, max(epochs_df['validation_accuracy'].max() * 1.1, 
-                       test_df['accuracy'].iloc[0] * 1.1 if test_df is not None and 'accuracy' in test_df.columns else 0))
-    
-    legend_labels_acc = ['validation accuracy']
-    if test_df is not None and 'accuracy' in test_df.columns:
-        legend_labels_acc.append(f'test accuracy: {test_df["accuracy"].iloc[0]:.4f}')
-        
-    ax2.legend(legend_elements_acc, legend_labels_acc)
+                    test_df['accuracy'].iloc[0] * 1.1 if test_df is not None and 'accuracy' in test_df.columns else 0))
+    ax2.legend(loc='upper left')
     ax2.grid(True)
-    
+
     # plot 3: relational vs non-relational validation accuracy (middle row, both cols)
     ax3 = plt.subplot(gs[1, 0:2])
-    
+
     # get relational and non-relational columns
     rel_col = [col for col in epochs_df.columns if col == 'acc_relational']
     non_rel_col = [col for col in epochs_df.columns if col == 'acc_non-relational']
-    
+
     legend_elements_rel_vs_nonrel = []
-    
+
     if rel_col:
-        line_rel = ax3.plot(epochs_df['epoch'], epochs_df[rel_col[0]], 'o-', label='relational', linewidth=2)[0]
+        line_rel = ax3.plot(epochs_df['epoch'], epochs_df[rel_col[0]], 'o-', linewidth=2)[0]
         line_color_rel = line_rel.get_color()
         
         if test_df is not None and rel_col[0] in test_df.columns:
             test_rel_acc = test_df[rel_col[0]].iloc[0]
             last_x = epochs_df['epoch'].iloc[-1]
             ax3.plot(last_x + 0.25, test_rel_acc, 's', markersize=10, markeredgewidth=2, 
-                   color=line_color_rel)
+                color=line_color_rel)
             
             legend_elements_rel_vs_nonrel.append((line_rel, 
-                                             Line2D([0], [0], marker='s', color='w', 
-                                                   markerfacecolor=line_color_rel, 
-                                                   markeredgecolor=line_color_rel, 
-                                                   markersize=10, markeredgewidth=2),
-                                             f"relational (test: {test_rel_acc:.4f})"))
+                                            Line2D([0], [0], marker='s', color='w', 
+                                                markerfacecolor=line_color_rel, 
+                                                markeredgecolor=line_color_rel, 
+                                                markersize=10, markeredgewidth=2),
+                                            f"relational (test: {test_rel_acc:.4f})"))
         else:
             legend_elements_rel_vs_nonrel.append((line_rel, None, "relational"))
-    
+
     if non_rel_col:
-        line_nonrel = ax3.plot(epochs_df['epoch'], epochs_df[non_rel_col[0]], 's-', label='non-relational', linewidth=2)[0]
+        line_nonrel = ax3.plot(epochs_df['epoch'], epochs_df[non_rel_col[0]], 's-', linewidth=2)[0]
         line_color_nonrel = line_nonrel.get_color()
         
         if test_df is not None and non_rel_col[0] in test_df.columns:
             test_non_rel_acc = test_df[non_rel_col[0]].iloc[0]
             last_x = epochs_df['epoch'].iloc[-1]
             ax3.plot(last_x + 0.25, test_non_rel_acc, 's', markersize=10, markeredgewidth=2, 
-                   color=line_color_nonrel)
+                color=line_color_nonrel)
             
             legend_elements_rel_vs_nonrel.append((line_nonrel, 
-                                             Line2D([0], [0], marker='s', color='w', 
-                                                   markerfacecolor=line_color_nonrel, 
-                                                   markeredgecolor=line_color_nonrel, 
-                                                   markersize=10, markeredgewidth=2),
-                                             f"non-relational (test: {test_non_rel_acc:.4f})"))
+                                            Line2D([0], [0], marker='s', color='w', 
+                                                markerfacecolor=line_color_nonrel, 
+                                                markeredgecolor=line_color_nonrel, 
+                                                markersize=10, markeredgewidth=2),
+                                            f"non-relational (test: {test_non_rel_acc:.4f})"))
         else:
             legend_elements_rel_vs_nonrel.append((line_nonrel, None, "non-relational"))
+
+    type_baselines = baseline_data["Accuracy by question type"]
+    used_y_positions = {}
     
+    for type_name, baselines in type_baselines.items():
+        for baseline_label, value in baselines.items():
+            if "most frequent class" in baseline_label.lower():
+                x_pos = min(epochs_df['epoch'])
+                
+                for y_val in used_y_positions.keys():
+                    if abs(y_val - value) < 0.02:
+                        x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                
+                used_y_positions[value] = x_pos
+                
+                linestyle = "--"
+                ax3.axhline(y=value, linestyle=linestyle, color="black")
+                ax3.text(x_pos, value + 0.003, f"{type_name} most frequent class", 
+                    va='bottom', color="black", fontsize=8)
+
     ax3.set_title('Relational vs non-relational validation accuracy')
     ax3.set_xlabel('Epoch')
     ax3.set_ylabel('Accuracy')
     ax3.set_xticks(epochs_df['epoch'])
-    ax3.set_xticks(epochs_df['epoch'])
-    
+
     if rel_col or non_rel_col:
         cols_to_check = rel_col + non_rel_col
         max_val = epochs_df[cols_to_check].max().max()
@@ -489,10 +585,10 @@ def visualize_training_log(log_path, output_dir=None):
             max_val = max(max_val, max(test_vals))
             
         ax3.set_ylim(0, max_val * 1.1)
-    
+
     formatted_handles = []
     formatted_labels = []
-    
+
     for elements in legend_elements_rel_vs_nonrel:
         if len(elements) == 3 and elements[1] is not None:
             # if we have both line and marker
@@ -502,23 +598,23 @@ def visualize_training_log(log_path, output_dir=None):
             # just the line
             formatted_handles.append(elements[0])
             formatted_labels.append(elements[2])
-    
+
     if any(isinstance(h, tuple) for h in formatted_handles):
         # we have at least one combined handle
         ax3.legend(handles=formatted_handles, labels=formatted_labels, 
-                 handler_map={tuple: HandlerTuple(ndivide=None)})
+                handler_map={tuple: HandlerTuple(ndivide=None)})
     else:
         # just regular handles
         ax3.legend(formatted_handles, formatted_labels)
-    
+
     ax3.grid(True)
-    
+
     # plot 4: relational question subtypes (bottom left)
     ax4 = plt.subplot(gs[2, 0])
     rel_subtype_cols = [col for col in epochs_df.columns if col.startswith('acc_relational_')]
-    
+
     legend_elements = []
-    
+
     for col in rel_subtype_cols:
         subtype = col.replace('acc_relational_', '')
         line = ax4.plot(epochs_df['epoch'], epochs_df[col], 'o-', linewidth=2)[0]
@@ -528,20 +624,39 @@ def visualize_training_log(log_path, output_dir=None):
         legend_label = f"{subtype} (test{test_value})"
         
         legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color, 
-                                         markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
-                             legend_label))
+                                        markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
+                            legend_label))
         
         if test_df is not None and col in test_df.columns:
             test_subtype_acc = test_df[col].iloc[0]
             last_x = epochs_df['epoch'].iloc[-1]
             ax4.plot(last_x + 0.25, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
                     color=line_color)
-    
+
+    subtype_baselines = baseline_data["Accuracy by question subtype"]
+    if "relational" in subtype_baselines:
+        used_y_positions = {}
+        
+        for subtype, baselines in subtype_baselines["relational"].items():
+            for baseline_label, value in baselines.items():
+                if "most frequent class" in baseline_label.lower():
+                    x_pos = min(epochs_df['epoch'])
+                    
+                    for y_val in used_y_positions.keys():
+                        if abs(y_val - value) < 0.02:
+                            x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                    
+                    used_y_positions[value] = x_pos
+                    
+                    ax4.axhline(y=value, linestyle="--", color="black")
+                    ax4.text(x_pos, value + 0.003, f"{subtype} most frequent class", 
+                        va='bottom', color="black", fontsize=8)
+
     ax4.set_title('Validation accuracy - relational question subtypes')
     ax4.set_xlabel('Epoch')
     ax4.set_ylabel('Accuracy')
     ax4.set_xticks(epochs_df['epoch'])
-    
+
     # y-axis limit based on available data
     if rel_subtype_cols:
         max_val = epochs_df[rel_subtype_cols].max().max()
@@ -557,19 +672,19 @@ def visualize_training_log(log_path, output_dir=None):
             max_val = max(max_val, max(test_vals))
             
         ax4.set_ylim(0, max_val * 1.1)
-    
+
     ax4.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
-             labels=[elements[2] for elements in legend_elements],
-             handler_map={tuple: HandlerTuple(ndivide=None)})
-    
+            labels=[elements[2] for elements in legend_elements],
+            handler_map={tuple: HandlerTuple(ndivide=None)})
+
     ax4.grid(True)
-    
+
     # plot 5: non-relational question subtypes (bottom right)
     ax5 = plt.subplot(gs[2, 1])
     non_rel_subtype_cols = [col for col in epochs_df.columns if col.startswith('acc_non-relational_')]
-    
+
     legend_elements = []
-    
+
     for col in non_rel_subtype_cols:
         subtype = col.replace('acc_non-relational_', '')
         line = ax5.plot(epochs_df['epoch'], epochs_df[col], 's-', linewidth=2)[0]
@@ -579,20 +694,39 @@ def visualize_training_log(log_path, output_dir=None):
         legend_label = f"{subtype} (test{test_value})"
         
         legend_elements.append((line, Line2D([0], [0], marker='s', color='w', markerfacecolor=line_color, 
-                                         markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
-                             legend_label))
+                                        markeredgecolor=line_color, markersize=10, markeredgewidth=2), 
+                            legend_label))
         
         if test_df is not None and col in test_df.columns:
             test_subtype_acc = test_df[col].iloc[0]
             last_x = epochs_df['epoch'].iloc[-1]
             ax5.plot(last_x + 0.25, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
                     color=line_color)
-    
-    ax5.set_title('Validation accuracy - relational question subtypes')
+
+    subtype_baselines = baseline_data["Accuracy by question subtype"]
+    if "non-relational" in subtype_baselines:
+        used_y_positions = {}
+        
+        for subtype, baselines in subtype_baselines["non-relational"].items():
+            for baseline_label, value in baselines.items():
+                if "most frequent class" in baseline_label.lower():
+                    x_pos = min(epochs_df['epoch'])
+                    
+                    for y_val in used_y_positions.keys():
+                        if abs(y_val - value) < 0.02:
+                            x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                    
+                    used_y_positions[value] = x_pos
+                    
+                    ax5.axhline(y=value, linestyle="--", color="black")
+                    ax5.text(x_pos, value + 0.003, f"{subtype} most frequent class", 
+                        va='bottom', color="black", fontsize=8)
+
+    ax5.set_title('Validation accuracy - non-relational question subtypes')
     ax5.set_xlabel('Epoch')
     ax5.set_ylabel('Accuracy')
     ax5.set_xticks(epochs_df['epoch'])
-    
+
     # set y-axis limit based on available data
     if non_rel_subtype_cols:
         max_val = epochs_df[non_rel_subtype_cols].max().max()
@@ -608,16 +742,16 @@ def visualize_training_log(log_path, output_dir=None):
             max_val = max(max_val, max(test_vals))
             
         ax5.set_ylim(0, max_val * 1.1)
-    
+
     ax5.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
-             labels=[elements[2] for elements in legend_elements],
-             handler_map={tuple: HandlerTuple(ndivide=None)})
-    
+            labels=[elements[2] for elements in legend_elements],
+            handler_map={tuple: HandlerTuple(ndivide=None)})
+
     ax5.grid(True)
-    
+
     plt.tight_layout()
-    
-    plt.suptitle(f'Training overview - {Path(log_path)}', fontsize=20, y=0.98)
+
+    plt.suptitle(f'Training overview - {Path(log_path).name}', fontsize=20, y=0.98)
     plt.subplots_adjust(top=0.94, bottom=0.12)  # adjust bottom to make room for the legend
     
     if output_dir:
@@ -627,3 +761,66 @@ def visualize_training_log(log_path, output_dir=None):
         plt.show()
     
     return parsed_data, epochs_df, test_df
+
+def parse_baseline_performance_log(log: str) -> dict:
+    """
+    Parse a log with nested, indented keys into a nested dictionary.
+
+    The log should have lines of the form:
+      key: value
+    or:
+      key:
+    where indentation determines nesting.
+
+    Parameters:
+        log (str): The multiline log string.
+
+    Returns:
+        dict: A nested dictionary representation of the log.
+    """
+    lines = [line for line in log.splitlines() if line.strip()]
+    root = {}
+    # stack holds tuples of (indentation level, dictionary reference)
+    stack = [(-1, root)]
+
+    for line in lines:
+        indent = len(line) - len(line.lstrip(' '))
+        stripped_line = line.strip()
+        if ':' not in stripped_line:
+            continue
+
+        key, _, value_str = stripped_line.partition(':')
+        key = key.strip()
+        value_str = value_str.strip()
+
+        if value_str == "":
+            value = {}
+        else:
+            try:
+                value = float(value_str)
+            except ValueError:
+                value = value_str
+
+        while stack and indent <= stack[-1][0]:
+            stack.pop()
+        parent = stack[-1][1]
+        parent[key] = value
+
+        if isinstance(value, dict):
+            stack.append((indent, value))
+
+    return root
+
+def parse_log_file(file_path: str) -> dict:
+    """
+    Parse a log from a file path into a nested dictionary.
+
+    Parameters:
+        file_path (str): The path to the log file.
+
+    Returns:
+        dict: A nested dictionary representation of the log.
+    """
+    with open(file_path, "r") as file:
+        log_content = file.read()
+    return parse_baseline_performance_log(log_content)

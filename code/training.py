@@ -1,9 +1,15 @@
 import os
 import torch
+import random
 import time
 import numpy as np
 from plotting import visualize_training_log
 import progressbar
+from collections import Counter
+
+def log_and_print(msg, file):
+    print(msg)
+    file.write(msg + "\n")
 
 def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form):
     """
@@ -36,10 +42,6 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
     os.makedirs(run_folder, exist_ok=True)
     model_path = os.path.join(run_folder, "model.pth")
     log_path = os.path.join(run_folder, "log.txt")
-
-    def log_and_print(msg, file):
-        print(msg)
-        file.write(msg + "\n")
 
     total_start_time = time.time()
 
@@ -314,3 +316,151 @@ def save_train_answer_distribution(experiment_dir, dataset_builder):
     with open(output_path, 'w') as f:
         for answer, count in distribution.items():
             f.write(f"{answer} {count}\n")
+
+def load_answer_distribution(experiment_dir):
+    """
+    Load an answer distribution from a text file.
+
+    Parameters
+    ----------
+    experiment_dir : str
+        Path to the directory where the distribution file is located.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping answers (str) to counts (int).
+    """
+    filename = 'train_data_distribution.txt'
+    path = os.path.join(experiment_dir, filename)
+    distribution = {}
+    
+    with open(path, 'r') as f:
+        for line in f:
+            answer, value = line.strip().split()
+            distribution[answer] = float(value)
+    
+    return distribution
+
+def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
+    """
+    Compute performance of three baselines:
+    1. Random guessing from answer_vocab
+    2. Most frequent class prediction
+    3. Sampling from empirical distribution
+    
+    Parameters:
+    -----------
+    test_loader : DataLoader
+        DataLoader for the test dataset.
+    answer_vocab : dict
+        Mapping of answer labels to indices.
+    experiment_dir : str
+        Directory where results will be saved.
+    """
+    
+    all_answers = []
+    all_question_types = []
+    all_question_subtypes = []
+    
+    for _, _, _, answers, q_types, q_subtypes in test_loader:
+        all_answers.extend(answers.numpy())
+        all_question_types.extend(q_types)
+        all_question_subtypes.extend(q_subtypes)
+    
+    all_answers = np.array(all_answers)
+    all_question_types = np.array(all_question_types)
+    all_question_subtypes = np.array(all_question_subtypes)
+    
+    unique_types = np.unique(all_question_types)
+    unique_subtypes = np.unique(all_question_subtypes)
+    relational_subtypes = ["furthest", "count", "closest"]
+    
+    probs = load_answer_distribution(experiment_dir)
+    
+    answer_to_idx = {}
+    for answer, idx in answer_vocab.items():
+        answer_to_idx[str(answer)] = idx
+    
+    answers_list = list(probs.keys())
+    probs_list = [probs[answer] for answer in answers_list]
+    
+    most_frequent_answer = max(probs.items(), key=lambda x: x[1])[0]
+    most_frequent_idx = answer_to_idx[most_frequent_answer]
+    
+    num_classes = len(answer_vocab)
+    total_samples = len(all_answers)
+    
+    # predictions for each baseline
+    random_preds = np.random.randint(0, num_classes, size=total_samples)
+    most_freq_preds = np.full_like(all_answers, most_frequent_idx)
+    
+    indices = []
+    dist = []
+    
+    for i, answer in enumerate(answers_list):
+        indices.append(answer_to_idx[answer])
+        dist.append(probs_list[i])
+    
+    sampled_answers = np.random.choice(
+        indices,
+        size=total_samples,
+        p=dist
+    )
+    
+    random_acc = (random_preds == all_answers).mean()
+    most_freq_acc = (most_freq_preds == all_answers).mean()
+    empirical_acc = (sampled_answers == all_answers).mean()
+    
+    log_path = os.path.join(experiment_dir, "baseline_performance.txt")
+    
+    with open(log_path, "w") as log_file:
+        log_and_print(f"Baseline performance evaluation", log_file)
+        log_and_print("\nOverall accuracy:", log_file)
+        log_and_print(f"  Random guessing: {random_acc:.4f}", log_file)
+        log_and_print(f"  Most frequent class: {most_freq_acc:.4f}", log_file)
+        log_and_print(f"  Empirical distribution sampling: {empirical_acc:.4f}", log_file)
+        
+        # accuracy by question type
+        log_and_print("\nAccuracy by question type:", log_file)
+        for q_type in unique_types:
+            type_indices = np.where(all_question_types == q_type)[0]
+            type_random_acc = (random_preds[type_indices] == all_answers[type_indices]).mean()
+            type_most_freq_acc = (most_freq_preds[type_indices] == all_answers[type_indices]).mean()
+            type_empirical_acc = (sampled_answers[type_indices] == all_answers[type_indices]).mean()
+            
+            log_and_print(f"  {q_type}:", log_file)
+            log_and_print(f"    Random guessing: {type_random_acc:.4f}", log_file)
+            log_and_print(f"    Most frequent class: {type_most_freq_acc:.4f}", log_file)
+            log_and_print(f"    Empirical distribution sampling: {type_empirical_acc:.4f}", log_file)
+        
+        # accuracy by question subtype
+        log_and_print("\nAccuracy by question subtype:", log_file)
+        for q_type in unique_types:
+            log_and_print(f"  {q_type}:", log_file)
+            
+            # Get subtypes for this question type
+            if q_type == "relational":
+                relevant_subtypes = [s for s in unique_subtypes if s in relational_subtypes]
+            else:
+                relevant_subtypes = [s for s in unique_subtypes if s not in relational_subtypes]
+            
+            for subtype in relevant_subtypes:
+                subtype_indices = np.where(all_question_subtypes == subtype)[0]
+                if len(subtype_indices) == 0:
+                    continue
+                    
+                subtype_random_acc = (random_preds[subtype_indices] == all_answers[subtype_indices]).mean()
+                subtype_most_freq_acc = (most_freq_preds[subtype_indices] == all_answers[subtype_indices]).mean()
+                subtype_empirical_acc = (sampled_answers[subtype_indices] == all_answers[subtype_indices]).mean()
+                
+                log_and_print(f"    {subtype}:", log_file)
+                log_and_print(f"      Random guessing: {subtype_random_acc:.4f}", log_file)
+                log_and_print(f"      Most frequent class: {subtype_most_freq_acc:.4f}", log_file)
+                log_and_print(f"      Empirical distribution sampling: {subtype_empirical_acc:.4f}", log_file)
+    
+    return {
+        "random": random_acc,
+        "most_frequent": most_freq_acc,
+        "empirical": empirical_acc
+    }
