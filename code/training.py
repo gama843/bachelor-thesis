@@ -439,7 +439,7 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
         for q_type in unique_types:
             log_and_print(f"  {q_type}:", log_file)
             
-            # Get subtypes for this question type
+            # get subtypes for this question type
             if q_type == "relational":
                 relevant_subtypes = [s for s in unique_subtypes if s in relational_subtypes]
             else:
