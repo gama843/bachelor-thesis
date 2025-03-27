@@ -1,15 +1,10 @@
 import os
 import torch
-import random
 import time
 import numpy as np
 from plotting import visualize_training_log
 import progressbar
-from collections import Counter
-
-def log_and_print(msg, file):
-    print(msg)
-    file.write(msg + "\n")
+from utils import log_and_print
 
 def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form):
     """

@@ -11,6 +11,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from utils import get_question_type_and_subtype
 
 # batch preparation
 def collate_fn(batch):
@@ -317,27 +318,7 @@ class RelationalDataset(Dataset):
         tokenized_question = self._tokenize_question(question)
         binary_question = torch.tensor(question_vector, dtype=torch.float)
         encoded_answer = self._encode_answer(answer)
-
-        question_type = "relational" if question_vector[6] == 1 else "non-relational"
-
-        if question_type == "relational":
-            if question_vector[8] == 1:
-                question_subtype = "closest"
-            elif question_vector[9] == 1:
-                question_subtype = "furthest"
-            elif question_vector[10] == 1:
-                question_subtype = "count"
-            else:
-                raise ValueError("Unknown relational question subtype")
-        else:
-            if question_vector[8] == 1:
-                question_subtype = "topbottom"
-            elif question_vector[9] == 1:
-                question_subtype = "leftright"
-            elif question_vector[10] == 1:
-                question_subtype = "shape"
-            else:
-                raise ValueError("Unknown non-relational question subtype")
+        question_type, question_subtype = get_question_type_and_subtype(question_vector)
 
         return img, tokenized_question, binary_question, encoded_answer, question_type, question_subtype
 
