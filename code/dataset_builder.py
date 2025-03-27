@@ -124,7 +124,7 @@ class DatasetBuilder:
         Returns:
         --------
         list
-            A list of samples where each sample is a tuple (image_path, question, answer).
+            A list of samples where each sample is a tuple (image_path, question, answer, question vector).
         """
         samples = []
         for image_path in image_paths:
