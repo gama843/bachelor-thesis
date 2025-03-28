@@ -8,13 +8,20 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# random_seed = 1
+# reproducibility: 
 
-# random.seed(random_seed)
-# np.random.seed(random_seed)
-# torch.manual_seed(random_seed)
-# if torch.cuda.is_available():
-#     torch.cuda.manual_seed_all(random_seed)
+# fix the random seed 
+seed = 1
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(seed)
+
+# force deterministic torch/CUDA ops
+torch.use_deterministic_algorithms(True)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -47,7 +54,7 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 50
+        num_images = 500
         num_epochs = 5
         batch_size = 64
         model_type = 'relational'
