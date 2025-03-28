@@ -3,7 +3,6 @@ import base64
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from openai import OpenAI
-from data_generator import DataGenerator
 from dataset_builder import DatasetBuilder
 from utils import get_question_type_and_subtype, log_and_print
 
@@ -117,23 +116,34 @@ def breakdown_by(results, key):
         buckets[r[key]].append(r)
     return {k: compute_accuracy(v) for k, v in buckets.items()}
 
-if __name__ == "__main__":
-    img_dim = 75
-    num_images = 25
-    model_name = "o1"
+def model_eval(experiment_dir, model_name):
+    """
+    Evaluate a language model's performance on a test set and log detailed results.
 
-    experiment_dir = "llmso1"
-    data_dir = os.path.join(experiment_dir, 'data')
-    os.makedirs(experiment_dir, exist_ok=True)
+    Parameters:
+    -----------
+    experiment_dir : str
+        Path to the experiment directory containing the dataset builder and where logs/plots will be saved.
+    
+    model_name : str
+        Name of the language model to evaluate (e.g., 'gpt-4o', 'o1', 'gpt-4.5-preview').
 
-    generator = DataGenerator(data_dir)
-    generator.generate_dataset(img_dim=img_dim, num_images=num_images)
+    Description:
+    ------------
+    Loads the test samples from a saved DatasetBuilder, evaluates each sample using the specified model,
+    logs each result to a file, computes accuracy overall and by question (sub)type, and saves a horizontal
+    bar plot summarizing the performance metrics. Accuracy for 'relational' and 'non-relational' subtypes
+    is grouped and color-coded in the plot.
 
-    builder = DatasetBuilder(data_dir)
+    Output:
+    -------
+    - A detailed log file (log.txt) in the experiment directory.
+    - A performance plot saved as performance_overview_<model_name>.png in the experiment directory.
+    """
+    builder = DatasetBuilder.load(os.path.join(experiment_dir, 'dataset_builder.pickle'))
     answer_set = builder.answer_vocab
-
     results = []
-    log_path = os.path.join(experiment_dir, "log.txt")
+    log_path = os.path.join(experiment_dir, f"eval_log_{model_name}.txt")
     log_file = open(log_path, "w")
 
     log_and_print(f"Model: {model_name}", log_file)
@@ -190,3 +200,30 @@ if __name__ == "__main__":
     plt.savefig(plot_path)
     log_and_print(f"Plot saved to {plot_path}", log_file)
     log_file.close()
+
+def run_llm_evaluation(experiment_dir, model_name='all'):
+    """
+    Run LLM evaluation on the specified model or all available models.
+
+    Parameters:
+    -----------
+    experiment_dir : str
+        Path to the experiment directory.
+    model_name : str
+        Name of the model to evaluate ('all', 'gpt-4o', 'o1', 'gpt-4.5-preview').
+
+    Raises:
+    -------
+    ValueError
+        If an unknown model_name is provided.
+    """
+    models = ['gpt-4o', 'o1', 'gpt-4.5-preview']
+    model_name = model_name.lower()
+
+    if model_name == 'all':
+        for name in models:
+            model_eval(experiment_dir, name)
+    elif model_name in models:
+        model_eval(experiment_dir, model_name)
+    else:
+        raise ValueError(f"Unknown model '{model_name}'. Available options are: {models + ['all']}")

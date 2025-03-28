@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 # reproducibility: 
 
 # fix the random seed 
-seed = 1
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -31,6 +31,7 @@ from data_generator import DataGenerator
 from models import ModelConstructor
 from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
 from training import validate_one_epoch, train_and_validate, save_train_answer_distribution, compute_baseline_performance
+from llms import run_llm_evaluation
 
 def main():
     parser = argparse.ArgumentParser(
@@ -46,6 +47,8 @@ def main():
     parser.add_argument('-m', '--model_path', type=str, help='Path to the model to be evaluated.')
     parser.add_argument('-d', '--dataset_path', type=str, help='Path to the dataset for evaluation.')
     parser.add_argument('-r', '--report_path', type=str, help='Path to save the evaluation report.')
+    parser.add_argument('-l', '--llm_eval', type=str, help='Path to the experiment folder.')
+    parser.add_argument('-n', '--llm_name', type=str, help='The LLM you want to test, valid options are: "gpt-4o", "gpt-4.5-preview", "o1", "all". Default is "all".')
 
     args = parser.parse_args()
 
@@ -54,17 +57,17 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 500
-        num_epochs = 5
-        batch_size = 64
+        num_images = 5
+        num_epochs = 2
+        batch_size = 2
         model_type = 'relational'
         img_arch = 'cnn'
         question_form = 'binary'
-        note = '2'
+        note = ''
         continue_training = False
 
         today = datetime.datetime.now().strftime("%d%m%Y")       
-        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}"
+        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}_{seed}"
         if note:
             experiment_dir += '_' + note
         data_dir = os.path.join(experiment_dir, 'data')
@@ -111,6 +114,12 @@ def main():
     
     else:
         # handle the provided arguments logic
+        if args.llm_eval:
+            if args.llm_name:
+                run_llm_evaluation(args.llm_eval, args.llm_name)
+            else:
+                run_llm_evaluation(args.llm_eval)
+
         if args.generate2D:
             generator = DataGenerator(args.generate2D)
             generator.generate_dataset(img_dim=224, num_images=10)
