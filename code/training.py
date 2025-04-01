@@ -224,8 +224,8 @@ def validate_one_epoch(model, val_loader, criterion, device, question_form):
 
     model.eval()
     running_loss = 0.0
-    all_subtypes = ["furthest", "count", "closest", "shape", "topbottom", "leftright"]
-    relational_subtypes = ["furthest", "count", "closest"]
+    all_subtypes = ["farthest", "count", "closest", "shape", "topbottom", "leftright"]
+    relational_subtypes = ["farthest", "count", "closest"]
     # non_relational_subtypes = ["shape", "topbottom", "leftright"]
     
     all_predictions = []
@@ -276,7 +276,7 @@ def validate_one_epoch(model, val_loader, criterion, device, question_form):
             type_accuracy = (all_predictions[type_indices] == all_true_labels[type_indices]).mean()
             breakdown_accuracy[q_type] = float(type_accuracy)
     
-    # question subtype breakdown (furthest, count, closest, shape, etc.)
+    # question subtype breakdown (farthest, count, closest, shape, etc.)
     # this matches the paper's detailed breakdown by question categories
     subtype_accuracy = {"relational": {}, "non-relational": {}}
     for subtype in all_subtypes:
@@ -306,7 +306,7 @@ def save_train_answer_distribution(experiment_dir, dataset_builder):
         Instance that provides access to training samples and a method to compute answer distribution.
     """
     distribution = dataset_builder.compute_answer_distribution(dataset_builder.train_samples)
-    output_path = os.path.join(experiment_dir, 'train_data_distribution.txt')
+    output_path = os.path.join(experiment_dir, 'train_answer_dist.txt')
     
     with open(output_path, 'w') as f:
         for answer, count in distribution.items():
@@ -326,7 +326,7 @@ def load_answer_distribution(experiment_dir):
     dict
         A dictionary mapping answers (str) to counts (int).
     """
-    filename = 'train_data_distribution.txt'
+    filename = 'train_answer_dist.txt'
     path = os.path.join(experiment_dir, filename)
     distribution = {}
     
@@ -369,7 +369,7 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
     
     unique_types = np.unique(all_question_types)
     unique_subtypes = np.unique(all_question_subtypes)
-    relational_subtypes = ["furthest", "count", "closest"]
+    relational_subtypes = ["farthest", "count", "closest"]
     
     probs = load_answer_distribution(experiment_dir)
     

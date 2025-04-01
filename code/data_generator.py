@@ -2,10 +2,10 @@ import os
 import math
 import json
 import shutil
-from time import time
 import numpy as np
 import cv2
 import progressbar
+from utils import get_question_type_and_subtype
 
 # This module uses the @public annotation to include certain private methods in the generated documentation.
 # The @public tag is applied only for the purpose of documentation generation.
@@ -783,7 +783,7 @@ class DataGenerator:
                 continue
             vectors.add(vector_string)
 
-            subtype = self._get_question_subtype(question_vector, relational=True)
+            _, subtype = get_question_type_and_subtype(question_vector)
             color = self._get_color_from_vector(question_vector, palette)
             question_text = self._get_question_text(subtype, color, relational=True)
             answer = self._get_relational_answer(subtype, color, objects_info)
@@ -804,7 +804,7 @@ class DataGenerator:
                 continue
             vectors.add(vector_string)
 
-            subtype = self._get_question_subtype(question_vector, relational=False)
+            _, subtype = get_question_type_and_subtype(question_vector)
             color = self._get_color_from_vector(question_vector, palette)
             question_text = self._get_question_text(subtype, color, relational=False)
             answer = self._get_non_relational_answer(img_dim, subtype, color, objects_info)
@@ -852,50 +852,6 @@ class DataGenerator:
         vector[three_bit_index] = 1
 
         return vector
-    
-    def _get_question_subtype(self, vector, relational=True):
-        """
-        @public
-
-        Decide the subtype of a question based on the given question vector.
-
-        Parameters:
-        -----------
-        vector : list
-            An 11-dimensional list representing the question vector.
-        relational : bool, optional
-            Whether the question is relational (True) or non-relational (False).
-
-        Returns:
-        --------
-        str
-            The subtype of the question. For relational questions, the subtype can be "closest", 
-            "furthest", or "count". For non-relational questions, the subtype can be "topbottom", 
-            "leftright", or "shape".
-
-        Raises:
-        -------
-        ValueError
-            If the vector does not correspond to any known question subtype.
-        """
-        if relational:
-            if vector[8] == 1:
-                return "closest"
-            elif vector[9] == 1:
-                return "furthest"
-            elif vector[10] == 1:
-                return "count"
-            else:
-                raise ValueError("Vector does not correspond to any known question subtype")
-        else:
-            if vector[8] == 1:
-                return "topbottom"
-            elif vector[9] == 1:
-                return "leftright"
-            elif vector[10] == 1:
-                return "shape"
-            else:
-                raise ValueError("Vector does not correspond to any known question subtype")
 
     def _get_question_text(self, subtype, color, relational=True):
         """
@@ -906,7 +862,7 @@ class DataGenerator:
         Parameters:
         -----------
         subtype : str
-            The subtype of the question (e.g., "closest", "furthest", "count" for relational questions, 
+            The subtype of the question (e.g., "closest", "farthest", "count" for relational questions, 
             or "topbottom", "leftright", "shape" for non-relational questions).
         color : str
             The color of the object that is the subject of the question.
@@ -921,7 +877,7 @@ class DataGenerator:
         if relational:
             if subtype == "closest":
                 return f"What is the color of the object that is closest to the {color} object?"
-            elif subtype == "furthest":
+            elif subtype == "farthest":
                 return f"What is the shape of the object that is farthest from the {color} object?"
             elif subtype == "count":
                 return f"How many objects have the shape of the {color} object?"
@@ -1004,16 +960,16 @@ class DataGenerator:
                 break
         return closest_object
     
-    def _get_furthest_object(self, color, objects_info):
+    def _get_farthest_object(self, color, objects_info):
         """
         @public
 
-        Find the object that is furthest from the specified color in the list of objects.
+        Find the object that is farthest from the specified color in the list of objects.
 
         Parameters:
         -----------
         color : str
-            The color of the reference object to find the furthest object from.
+            The color of the reference object to find the farthest object from.
         objects_info : list
             A list of dictionaries, where each dictionary contains information about an object 
             in the image, including its color and distances to other objects.
@@ -1021,11 +977,11 @@ class DataGenerator:
         Returns:
         --------
         dict or None
-            A dictionary containing information about the furthest object from the specified color, 
+            A dictionary containing information about the farthest object from the specified color, 
             or None if no such object is found.
         """
         max_distance = 0
-        furthest_object = None
+        farthest_object = None
         for obj_info in objects_info:
             # skip the question object
             if 'question' in obj_info:
@@ -1034,12 +990,12 @@ class DataGenerator:
                 for distance_info in obj_info["distances"]:
                     if distance_info["distance"] > max_distance:
                         max_distance = distance_info["distance"]
-                        furthest_object_id = distance_info["object_id"]
+                        farthest_object_id = distance_info["object_id"]
         for obj_info in objects_info:
-            if obj_info["id"] == furthest_object_id:
-                furthest_object = obj_info
+            if obj_info["id"] == farthest_object_id:
+                farthest_object = obj_info
                 break
-        return furthest_object
+        return farthest_object
     
     def _get_count_of_objects_with_shape(self, color, objects_info):
         """
@@ -1088,7 +1044,7 @@ class DataGenerator:
         Parameters:
         -----------
         subtype : str
-            The subtype of the question (e.g., "closest", "furthest", "count").
+            The subtype of the question (e.g., "closest", "farthest", "count").
         color : str
             The color of the reference object for the question.
         objects_info : list
@@ -1109,9 +1065,9 @@ class DataGenerator:
         if subtype == "closest":
             closest_object = self._get_closest_object(color, objects_info)
             return closest_object["color_name"]
-        elif subtype == "furthest":
-            furthest_object = self._get_furthest_object(color, objects_info)
-            return furthest_object["object_type"]
+        elif subtype == "farthest":
+            farthest_object = self._get_farthest_object(color, objects_info)
+            return farthest_object["object_type"]
         elif subtype == "count":
             return self._get_count_of_objects_with_shape(color, objects_info)
         else:

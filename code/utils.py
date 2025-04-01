@@ -12,7 +12,7 @@ def get_question_type_and_subtype(question_vector):
     tuple
         A tuple (question_type, question_subtype), where question_type is either
         'relational' or 'non-relational', and question_subtype is one of:
-        ['closest', 'furthest', 'count'] for relational,
+        ['closest', 'farthest', 'count'] for relational,
         ['topbottom', 'leftright', 'shape'] for non-relational.
 
     Raises
@@ -25,7 +25,7 @@ def get_question_type_and_subtype(question_vector):
     subtype_map = {
         "relational": {
             8: "closest",
-            9: "furthest",
+            9: "farthest",
             10: "count"
         },
         "non-relational": {

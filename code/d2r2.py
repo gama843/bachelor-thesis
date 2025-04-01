@@ -29,7 +29,7 @@ import torch.nn as nn
 
 from data_generator import DataGenerator
 from models import ModelConstructor
-from dataset_builder import DatasetBuilder, Rotate180DegreesTransform, collate_fn
+from dataset_builder import DatasetBuilder, collate_fn
 from training import validate_one_epoch, train_and_validate, save_train_answer_distribution, compute_baseline_performance
 from llms import run_llm_evaluation
 
@@ -57,10 +57,10 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 5
-        num_epochs = 2
-        batch_size = 2
-        model_type = 'relational'
+        num_images = 50
+        num_epochs = 1
+        batch_size = 64
+        model_type = 'baseline'
         img_arch = 'cnn'
         question_form = 'binary'
         note = ''

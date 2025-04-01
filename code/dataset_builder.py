@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from utils import get_question_type_and_subtype
+from utils import get_question_type_and_subtype, log_and_print
 
 # batch preparation
 def collate_fn(batch):
@@ -77,7 +77,7 @@ class DatasetBuilder:
         self.val_dataset = RelationalDataset(self.val_samples, self.vocab, self.answer_vocab, self.max_len, transform=self.transform, transform_prob=self.transform_prob, random_seed=self.random_seed)
         self.test_dataset = RelationalDataset(self.test_samples, self.vocab, self.answer_vocab, self.max_len, transform=self.transform, transform_prob=self.transform_prob, random_seed=self.random_seed)
 
-    def _load_data(self, train_size=0.7, val_size=0.1, test_size=0.2):
+    def _load_data(self, train_size=0.95, val_size=0.025, test_size=0.025):
         """
         @public
         
@@ -108,6 +108,13 @@ class DatasetBuilder:
         self.train_samples = self._generate_samples(data, train_paths)
         self.val_samples = self._generate_samples(data, val_paths)
         self.test_samples = self._generate_samples(data, test_paths)
+
+        log_path = os.path.join(os.path.dirname(self.data_dir), 'split_size.txt')
+
+        with open(log_path, 'w') as f:
+            log_and_print('Train samples: ' + str(len(self.train_samples)), f)
+            log_and_print('Val samples: ' + str(len(self.val_samples)), f)
+            log_and_print('Test samples: ' + str(len(self.test_samples)), f)
 
     def _generate_samples(self, data, image_paths):
         """

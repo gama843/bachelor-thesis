@@ -291,9 +291,6 @@ class RelationalNetwork(nn.Module):
         num_objects = object_features.size(1)
         relations = []
 
-        if question_embedding.dim() == 3:  # shape: [1, batch_size, question_dim]
-            question_embedding = question_embedding.squeeze(0)
-
         for i in range(num_objects):
             for j in range(num_objects):
                 if i != j:
@@ -387,60 +384,75 @@ class RelationalReasoningModel(nn.Module):
         output = self.relation_network(object_features, question_embedding)
         
         return output
-    
+
 class BaselineModel(nn.Module):
     """
-    Base model that combines a CNN-based image encoder and an LSTM-based question encoder
-    with a simple MLP for classification without a relational network module.
+    Baseline model that combines a CNN-based image encoder and a question encoder
+    (either LSTM-based or binary) with a standard MLP for classification — without
+    any relational reasoning module. Matches the CNN+MLP baseline from the Sort-of-CLEVR paper.
     """
 
-    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form):
         super(BaselineModel, self).__init__()
+
+        # image encoder
         if img_arch == 'cnn':
-            self.image_encoder = CNNImageEncoder()    
+            self.image_encoder = CNNImageEncoder()  # Output shape: (batch_size, 256, 5, 5)
+            self.img_feature_dim = 5 * 5 * (256 + 2)  # +2 for spatial coordinates (x, y)
+        elif img_arch == 'resnet':
+            self.image_encoder = ResNetImageEncoder()  # Output shape: (batch_size, 512, 7, 7)
+            self.img_feature_dim = 512 * 7 * 7
         else:
-            self.image_encoder = ResNetImageEncoder()
-        self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
-        
-        # MLP for classification
-        self.fc1 = nn.Linear(512 * 7 * 7 + hidden_size, 256)  # where 512 is the number of channels in the output feature map of ResNet18 and 7x7 are the spatial dimensions, hidden_size comes from the dimensionality of the question embeddings
-        self.fc2 = nn.Linear(256, num_classes)
+            raise ValueError(f"Unsupported image architecture: {img_arch}")
+
+        # question encoder
+        if question_form == 'string':
+            self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
+        elif question_form == 'binary':
+            self.question_encoder = BinaryQuestionEncoder()
+            hidden_size = 11  # fixed for binary question format
+        else:
+            raise ValueError(f"Unsupported question form: {question_form}")
+
+        # MLP for classification (aligned with paper: 4 layers, 2000 neurons each, ReLU)
+        input_dim = self.img_feature_dim + hidden_size
+        self.classifier = nn.Sequential(
+            nn.Linear(input_dim, 2000),
+            nn.ReLU(),
+            nn.Linear(2000, 2000),
+            nn.ReLU(),
+            nn.Linear(2000, 2000),
+            nn.ReLU(),
+            nn.Linear(2000, num_classes)  # final logits for classification
+        )
 
     def forward(self, image: torch.Tensor, questions: torch.Tensor) -> torch.Tensor:
         """
         Forward pass to get the model's prediction.
-        
-        Parameters:
-        -----------
-        image : torch.Tensor
-            Input image in tensor format.
-        questions : torch.Tensor
-            Input tensor containing word indices of shape (batch_size, seq_len).
 
-        Returns:
-        --------
+        Parameters
+        ----------
+        image : torch.Tensor
+            Input image tensor of shape (batch_size, C, H, W).
+        questions : torch.Tensor
+            Input question tensor (either sequence of word indices or binary vector).
+
+        Returns
+        -------
         torch.Tensor
             Output prediction tensor of shape (batch_size, num_classes).
         """
-        
-        # encode the image and flatten the features
-        image_features = self.image_encoder(image)  # shape: (batch_size, 512, 7, 7)
-        
-        image_features = image_features.reshape(image_features.size(0), -1)  # flatten to (batch_size, 512*7*7)
-        
-        # encode the question
-        question_embedding = self.question_encoder(questions)  # shape: (batch_size, hidden_size)
-        
-        if question_embedding.dim() == 3:  # shape: [1, batch_size, question_dim]
-            question_embedding = question_embedding.squeeze(0)
-        
-        # concatenate image and question features
-        combined_features = torch.cat((image_features, question_embedding), dim=1)  # shape: (batch_size, 512*7*7 + hidden_size)
-        
-        # pass through the MLP
-        x = nn.ReLU()(self.fc1(combined_features))
-        output = self.fc2(x)
-        
+
+        # encode image and flatten
+        image_features = self.image_encoder(image)  # shape: (B, C, H, W)
+        image_features = image_features.reshape(image_features.size(0), -1)  # shape: (B, img_feature_dim)
+
+        # encode question
+        question_embedding = self.question_encoder(questions)
+
+        # combine and classify
+        combined = torch.cat((image_features, question_embedding), dim=1)  # shape: (B, img_feature_dim + hidden_size)
+        output = self.classifier(combined)
         return output
 
 # This module uses the @public annotation to include certain private methods in the generated documentation.

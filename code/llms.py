@@ -171,7 +171,7 @@ def model_eval(experiment_dir, model_name):
 
     log_and_print("\nAccuracy breakdown per question subtype:", log_file)
 
-    relational_subtypes = {"closest", "count", "furthest"}
+    relational_subtypes = {"closest", "count", "farthest"}
     grouped_subtypes = {
         "relational": sorted([s for s in subtype_acc if s in relational_subtypes]),
         "non-relational": sorted([s for s in subtype_acc if s not in relational_subtypes])
