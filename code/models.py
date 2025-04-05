@@ -271,42 +271,61 @@ class RelationalNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(100, num_classes)
         )
-
+    
     def forward(self, object_features, question_embedding):
         """
-        Performs a forward pass through the network.
+        Vectorized forward pass, includes self-relations, aligning with paper.
 
         Parameters
         ----------
         object_features : torch.Tensor
-            A tensor containing the features of objects, with shape (batch_size, num_objects, feature_dim).
+            A tensor containing the features of objects.
+            Tensor shape: (batch_size, num_objects, feature_dim).
         question_embedding : torch.Tensor
-            A tensor representing the question embedding, with shape (batch_size, question_dim).
+            A tensor representing the question embedding.
+            Tensor shape: (batch_size, question_dim).
 
         Returns
         -------
         torch.Tensor
-            The output tensor, which contains the prediction result. The shape is (batch_size, num_classes).
+            Output tensor shape: (batch_size, num_classes).
         """
-        num_objects = object_features.size(1)
-        relations = []
 
-        for i in range(num_objects):
-            for j in range(num_objects):
-                if i != j:
+        batch_size, num_objects, feature_dim = object_features.size()
 
-                    # concatenate the features of object pairs with the question embedding
-                    pair_features = torch.cat(
-                        [object_features[:, i], object_features[:, j], question_embedding], dim=1
-                    )
-                    
-                    relations.append(self.g_theta(pair_features))
-        
-        # sum the outputs from g_theta
-        relations_sum = torch.stack(relations, dim=1).sum(dim=1)
-        # apply f_phi to the summed output
+        # preparing object pair features
+
+        # we want to create a batch of cubes, where the front-view square 
+        # is formed by a set of objects going from the first row to the bottom one
+        # and copy (broadcast) this single col num_objects times across all cols
+        # and the depth of the cube represents the features
+        obj_i = object_features.unsqueeze(2).repeat(1, 1, num_objects, 1)
+
+        # here we apply the same idea, but now we start with objects spread across the first row and
+        # we want to broadcast to all rows 
+        obj_j = object_features.unsqueeze(1).repeat(1, num_objects, 1, 1)
+
+        # now, let's prepare a full copy of the question embedding for each pair
+        question_embedding_expanded = question_embedding.unsqueeze(1).unsqueeze(2).repeat(1, num_objects, num_objects, 1)
+
+        # and finally to conclude this mental gymnastics, concat all the cubes - 
+        # features of obj_i, obj_j and question embedding finally come together 
+        # (batch_size, num_objects, num_objects, 2*feature_dim + question_dim)
+        pair_features = torch.cat([obj_i, obj_j, question_embedding_expanded], dim=3)
+
+        # and flatten pairs for processing: (batch_size * num_objects * num_objects, combined_feature_dim)
+        pair_features = pair_features.view(batch_size * num_objects * num_objects, -1)
+
+        # voila, compute g_theta in one go
+        relations = self.g_theta(pair_features)
+
+        # reshape and sum relations per image: (batch_size, num_objects * num_objects, hidden_dim)
+        relations = relations.view(batch_size, num_objects * num_objects, -1)
+        relations_sum = relations.sum(dim=1)
+
+        # final processing via f_phi
         output = self.f_phi(relations_sum)
-        
+
         return output
     
 class RelationalReasoningModel(nn.Module):
