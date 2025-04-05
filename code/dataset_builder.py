@@ -2,6 +2,7 @@ import os
 import json
 import random
 import pickle
+import shutil
 from collections import Counter, OrderedDict
 
 import numpy as np
@@ -108,13 +109,32 @@ class DatasetBuilder:
         self.train_samples = self._generate_samples(data, train_paths)
         self.val_samples = self._generate_samples(data, val_paths)
         self.test_samples = self._generate_samples(data, test_paths)
-
+        
         log_path = os.path.join(os.path.dirname(self.data_dir), 'split_size.txt')
 
         with open(log_path, 'w') as f:
             log_and_print('Train samples: ' + str(len(self.train_samples)), f)
             log_and_print('Val samples: ' + str(len(self.val_samples)), f)
             log_and_print('Test samples: ' + str(len(self.test_samples)), f)
+
+        # save a random subset of test samples to a text file for establishing human baseline
+        test_subset_size = 200
+        subset_folder = os.path.join(os.path.dirname(self.data_dir), 'human_baseline_test_subset')
+        subset_path = os.path.join(subset_folder, 'descr.txt')
+        os.makedirs(subset_folder, exist_ok=True)
+
+        test_subset = random.sample(self.test_samples, min(test_subset_size, len(self.test_samples)))
+        copied_images = set()
+        with open(subset_path, 'w') as f:
+            for img_path, question, answer, question_vector in test_subset:
+                img_filename = os.path.basename(img_path)
+                new_img_path = os.path.join(subset_folder, img_filename)
+                if img_filename not in copied_images:
+                    shutil.copy(img_path, new_img_path)
+                    copied_images.add(img_filename)
+                relative_img_path = os.path.join('human_baseline_test_subset', img_filename)
+                question_vector_str = ''.join(str(bit) for bit in question_vector)
+                f.write(f"{relative_img_path}\t{question}\t{answer}\t{question_vector_str}\n")
 
     def _generate_samples(self, data, image_paths):
         """
