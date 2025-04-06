@@ -36,15 +36,16 @@ def collate_fn(batch):
         - question_types (list): List of question types ('relational' or 'non-relational').
         - question_subtypes (list): List of question subtypes (e.g., 'topbottom', 'closest').
     """
-    images, questions, binary_questions, answers, question_types, question_subtypes = zip(*batch)
+    images, questions, binary_questions, answers, question_types, question_subtypes, image_description_matrices = zip(*batch)
 
     images = torch.stack(images)
     questions = [torch.tensor(q, dtype=torch.long) for q in questions]
     questions = pad_sequence(questions, batch_first=True, padding_value=0)
     binary_questions = torch.stack(binary_questions)
     answers = torch.tensor(answers, dtype=torch.long)
+    image_description_matrices = torch.stack(image_description_matrices)
 
-    return images, questions, binary_questions, answers, list(question_types), list(question_subtypes)
+    return images, questions, binary_questions, answers, list(question_types), list(question_subtypes), image_description_matrices
 
 class DatasetBuilder:
     def __init__(self, data_dir, transform=None, transform_prob=0, random_seed=42):
@@ -126,7 +127,7 @@ class DatasetBuilder:
         test_subset = random.sample(self.test_samples, min(test_subset_size, len(self.test_samples)))
         copied_images = set()
         with open(subset_path, 'w') as f:
-            for img_path, question, answer, question_vector in test_subset:
+            for img_path, question, answer, question_vector, _ in test_subset:
                 img_filename = os.path.basename(img_path)
                 new_img_path = os.path.join(subset_folder, img_filename)
                 if img_filename not in copied_images:
@@ -157,9 +158,14 @@ class DatasetBuilder:
         samples = []
         for image_path in image_paths:
             img_info = data[image_path]
+            matrix = None
+            for obj_info in img_info:
+                if 'image_description_matrix' in obj_info:
+                    matrix = obj_info['image_description_matrix']
+                    break
             for obj_info in img_info:
                 if 'question' in obj_info:
-                    samples.append((os.path.join(self.data_dir, image_path), obj_info['question'], obj_info['answer'], obj_info['question_vector']))
+                    samples.append((os.path.join(self.data_dir, image_path), obj_info['question'], obj_info['answer'], obj_info['question_vector'], matrix))
         return samples
     
     def compute_answer_distribution(self, samples):
@@ -177,7 +183,7 @@ class DatasetBuilder:
             An OrderedDict with answers as keys and their normalized weights as values, sorted by weight in descending order.
         """
         answer_counts = {}
-        for _, _, answer, _ in samples:
+        for _, _, answer, _, _ in samples:
             if answer in answer_counts:
                 answer_counts[answer] += 1
             else:
@@ -206,7 +212,7 @@ class DatasetBuilder:
             The length of the longest question in the dataset.
         """
         max_len = 0
-        for _, question, _, _ in samples:
+        for _, question, _, _, _ in samples:
             question_len = len(question.split())
             max_len = max(max_len, question_len)
         return max_len
@@ -231,7 +237,7 @@ class DatasetBuilder:
         """
         word_counter = Counter()
 
-        for _, question, _, _  in samples:
+        for _, question, _, _, _  in samples:
             word_counter.update(question.lower().split())
 
         vocab = {"<PAD>": 0, "<UNK>": 1}
@@ -258,7 +264,7 @@ class DatasetBuilder:
         """
         answer_counter = Counter()
 
-        for _, _, answer, _ in samples:
+        for _, _, answer, _, _ in samples:
             answer_counter.update([answer])
 
         answer_vocab = {"<UNK>": 0}
@@ -334,7 +340,7 @@ class RelationalDataset(Dataset):
             - question_type: 'relational' or 'non-relational'.
             - question_subtype: Specific subtype of the question.
         """
-        image_path, question, answer, question_vector = self.samples[idx]
+        image_path, question, answer, question_vector, image_description_matrix = self.samples[idx]
         
         img = Image.open(image_path)
 
@@ -346,9 +352,77 @@ class RelationalDataset(Dataset):
         binary_question = torch.tensor(question_vector, dtype=torch.float)
         encoded_answer = self._encode_answer(answer)
         question_type, question_subtype = get_question_type_and_subtype(question_vector)
+        processed_image_description_matrix = self._process_image_description_matrix_to_tensor(image_description_matrix)
 
-        return img, tokenized_question, binary_question, encoded_answer, question_type, question_subtype
+        return img, tokenized_question, binary_question, encoded_answer, question_type, question_subtype, processed_image_description_matrix
 
+    def _process_image_description_matrix_to_tensor(self, image_description_matrix):
+        """
+        Processes a raw state description matrix for a single sample into a 2D tensor.
+
+        Performs one-hot encoding for categorical features and normalization
+        for coordinate features.
+
+        Supports only paper-specific settings not all of the options of d2r2 data generator. 
+
+        Parameters:
+        -----------
+        image_description_matrix : list[list or tuple]
+            The raw state description data for one sample, where each inner
+            list/tuple represents an object's features.
+
+        Returns:
+        --------
+        torch.Tensor
+            A 2D tensor of shape (num_objects, feature_dim) containing the
+            processed object representations.
+        """
+
+        colors = ['red', 'green', 'blue', 'orange', 'pink', 'yellow']
+        shapes = ['circle', 'square']
+        num_colors = len(colors)
+        num_shapes = len(shapes)
+
+        processed_objects = []
+
+        for raw_object_features in image_description_matrix:
+            color_name = raw_object_features[0]
+            shape_name = raw_object_features[1]
+            x_min = raw_object_features[2]
+            y_min = raw_object_features[3]
+            x_max = raw_object_features[4]
+            y_max = raw_object_features[5]
+
+            # one-hot encode color
+            color_idx = colors.index(color_name)
+            color_one_hot = [0.0] * num_colors
+            color_one_hot[color_idx] = 1.0
+
+            # one-hot encode shape
+            shape_idx = shapes.index(shape_name)
+            shape_one_hot = [0.0] * num_shapes
+            shape_one_hot[shape_idx] = 1.0
+
+            # normalize coordinates
+            norm_x_min = self._normalize_coord(x_min)
+            norm_y_min = self._normalize_coord(y_min)
+            norm_x_max = self._normalize_coord(x_max)
+            norm_y_max = self._normalize_coord(y_max)
+
+            # combine into final feature vector
+            feature_vector = color_one_hot + shape_one_hot + [norm_x_min, norm_y_min, norm_x_max, norm_y_max]
+            processed_objects.append(feature_vector)
+
+        # expected shape: (6, 12)
+        result = torch.tensor(processed_objects, dtype=torch.float)
+        assert result.size() == (6, 12), f"Tensor shape mismatch! Expected (6, 12), but got {result.size()}"
+        return result
+
+    def _normalize_coord(self, coord, dim_size=75):
+        """Normalizes a single coordinate to the range [-1, 1]."""
+        coord_float = float(coord)
+        return (2.0 * coord_float / dim_size) - 1.0
+        
     def _tokenize_question(self, question):
         """
         @public

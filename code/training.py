@@ -6,7 +6,7 @@ from plotting import visualize_training_log
 import progressbar
 from utils import log_and_print
 
-def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form):
+def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form, image_form):
     """
     Handles training, validation, logging, and model saving with metrics matching the paper.
 
@@ -56,14 +56,14 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
             
             # training phase
             train_start_time = time.time()
-            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device, question_form)
+            train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device, question_form, image_form)
             train_end_time = time.time()
             train_duration = train_end_time - train_start_time
             
             # validation phase
             val_start_time = time.time()
             val_loss, val_accuracy, breakdown, subtype_accuracy = validate_one_epoch(
-                model, val_loader, criterion, device, question_form
+                model, val_loader, criterion, device, question_form, image_form
             )
             val_end_time = time.time()
             val_duration = val_end_time - val_start_time
@@ -101,7 +101,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         log_and_print("\nEvaluating on test set...", log_file)
         test_start_time = time.time()
         test_loss, test_accuracy, test_breakdown, test_subtype_accuracy = validate_one_epoch(
-            model, test_loader, criterion, device, question_form
+            model, test_loader, criterion, device, question_form, image_form
         )
         test_end_time = time.time()
         test_duration = test_end_time - test_start_time
@@ -140,7 +140,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         vis_duration = vis_end_time - vis_start_time
         log_and_print(f"Visualization generation completed in {vis_duration:.2f} seconds", log_file)
 
-def train_one_epoch(model, train_loader, criterion, optimizer, device, question_form):
+def train_one_epoch(model, train_loader, criterion, optimizer, device, question_form, image_form):
     """
     Train the model for one epoch.
     
@@ -174,8 +174,11 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device, question_
     print('Epoch progress:')
     batch_bar.start()
 
-    for batch_idx, (images, questions, binary_questions, answers, _, _) in enumerate(train_loader):
-        images = images.to(device)
+    for batch_idx, (images, questions, binary_questions, answers, _, _, image_description_matrices) in enumerate(train_loader):
+        if image_form == 'image':
+            images = images.to(device)
+        else:
+            images = image_description_matrices.to(device)
         if question_form == 'string':
             questions = torch.tensor(questions, dtype=torch.long, device=device)
         else:
@@ -195,7 +198,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device, question_
     batch_bar.finish()
     return running_loss / len(train_loader)
 
-def validate_one_epoch(model, val_loader, criterion, device, question_form):
+def validate_one_epoch(model, val_loader, criterion, device, question_form, image_form):
     """
     Validate the model on the validation dataset with metrics matching the original paper.
 
@@ -234,7 +237,13 @@ def validate_one_epoch(model, val_loader, criterion, device, question_form):
     all_question_subtypes = []
 
     with torch.no_grad():
-        for images, questions, binary_questions, answers, q_types, q_subtypes in val_loader:
+        for images, questions, binary_questions, answers, q_types, q_subtypes, image_description_matrices in val_loader:
+            if image_form == 'matrix':
+                images = image_description_matrices
+            elif image_form == 'image':
+                pass
+            else:
+                raise ValueError(f"Unsupported image form: {image_form}")
             images = images.to(device)
             questions = torch.tensor(questions, dtype=torch.long, device=device)
             binary_questions = binary_questions.to(device)
@@ -358,7 +367,7 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
     all_question_types = []
     all_question_subtypes = []
     
-    for _, _, _, answers, q_types, q_subtypes in test_loader:
+    for _, _, _, answers, q_types, q_subtypes, _ in test_loader:
         all_answers.extend(answers.numpy())
         all_question_types.extend(q_types)
         all_question_subtypes.extend(q_subtypes)
