@@ -1170,7 +1170,9 @@ class DataGenerator:
             row.append(obj_info["object_type"])
             row.extend(bbox)
             matrix.append(row)
-        obj_info["image_description_matrix"] = matrix
+        objects_info.append({
+            "image_description_matrix": matrix
+        })
         
         return objects_info    
 
@@ -1224,6 +1226,7 @@ class DataGenerator:
         self.img_dim = img_dim
 
         if shapes is None:
+            # paper-specific settings
             shapes = {
                 # "rectangle": self._gen_rectangle,
                 "circle": self._gen_circle,
@@ -1234,6 +1237,7 @@ class DataGenerator:
         
         if palette is None:
             palette = {
+                # paper-specific settings
                 'red': (0, 0, 255),
                 'green': (0, 255, 0),
                 'blue': (255, 0, 0),
