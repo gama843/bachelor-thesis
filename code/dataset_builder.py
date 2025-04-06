@@ -332,13 +332,14 @@ class RelationalDataset(Dataset):
         Returns:
         --------
         tuple
-            A tuple (image, tokenized_question, encoded_answer, question_type, question_subtype) where:
+            A tuple (image, tokenized_question, encoded_answer, question_type, question_subtype, image_description_matrix) where:
             - image: Transformed image tensor.
             - tokenized_question: List of token indices.
             - binary_question: Binary vector tensor representing the question.
             - encoded_answer: Integer index.
             - question_type: 'relational' or 'non-relational'.
             - question_subtype: Specific subtype of the question.
+            - image_description_matrix: Factored representation of the image.
         """
         image_path, question, answer, question_vector, image_description_matrix = self.samples[idx]
         

@@ -86,7 +86,7 @@ class CNNImageEncoder(nn.Module):
 class ResNetImageEncoder(nn.Module):
     """
     ImageEncoder class using a pre-trained ResNet18 model for feature extraction,
-    with built-in image preprocessing.
+    with built-in image preprocessing. Doesn't use spatial coordinates of objects as the CNNImageEncoder.
 
     Methods:
     --------
@@ -96,8 +96,9 @@ class ResNetImageEncoder(nn.Module):
         Passes the preprocessed input image through the CNN to extract feature maps.
     """
 
-    def __init__(self):
+    def __init__(self, return_object_features=False):
         super(ResNetImageEncoder, self).__init__()
+        self.return_object_features = return_object_features
         # uses a pre-trained ResNet18 model, excluding the last fully connected layer
         self.cnn = models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
         self.cnn = nn.Sequential(*list(self.cnn.children())[:-2])
@@ -136,13 +137,55 @@ class ResNetImageEncoder(nn.Module):
         Returns:
         --------
         torch.Tensor
-            Output tensor of shape (batch_size, 512, H, W), where 512 is the number of feature
-            channels, and H and W are the spatial dimensions of the output feature map.
+            - if return_object_features: (B, N_objects, F)
+            - else: (B, 512, 7, 7)
         """
         preprocessed_image = self.preprocess_image(image)
-        features = self.cnn(preprocessed_image)
+        features = self.cnn(preprocessed_image)  # shape: (B, 512, 7, 7)
+
+        if self.return_object_features:
+            B, C, H, W = features.size()
+            features = features.view(B, C, H * W).permute(0, 2, 1)  # (B, 49, 512)
         return features
-    
+
+class FactoredRepresentationEncoder(nn.Module):
+    """
+    Pro-forma encoder for pre-processed factored state descriptions (object matrices).
+
+    This module primarily ensures the input tensor has the correct format (dtype),
+    acting as a standardized interface similar to BinaryQuestionEncoder. It does not
+    perform computations like CNNImageEncoder.
+    """
+    def __init__(self):
+        """
+        This is a pro-forma module.
+        """
+        super(FactoredRepresentationEncoder, self).__init__()
+
+    def forward(self, batch_tensor: torch.Tensor) -> torch.Tensor:
+        """
+        Processes the batch tensor of pre-computed object features.
+
+        Parameters:
+        -----------
+        batch_tensor : torch.Tensor
+            Input tensor containing batched object features.
+            Expected shape: (batch_size, num_objects, feature_dim).
+            Shape for specialized Sort-of-CLEVR-like case: (batch_size, 6, 12).
+
+        Returns:
+        --------
+        torch.Tensor
+            The input tensor, ensured to have dtype torch.float.
+        """
+        if not isinstance(batch_tensor, torch.Tensor):
+            batch_tensor = torch.tensor(batch_tensor, dtype=torch.float)
+
+        if batch_tensor.dtype != torch.float:
+            batch_tensor = batch_tensor.float()
+
+        return batch_tensor
+        
 class QuestionEncoder(nn.Module):
     """
     Module for encoding questions using an LSTM.
@@ -237,7 +280,7 @@ class RelationalNetwork(nn.Module):
         Performs a forward pass through the network using object features and a question embeddings.
     """
 
-    def __init__(self, question_dim, num_classes):
+    def __init__(self, question_dim, num_classes, img_feature_dim):
         """
         Initializes the RelationalNetwork with two MLPs: g_theta and f_phi.
 
@@ -251,7 +294,7 @@ class RelationalNetwork(nn.Module):
         super(RelationalNetwork, self).__init__()
         
         self.g_theta = nn.Sequential(
-            nn.Linear(2 * (256 + 2) + question_dim, 2000),
+            nn.Linear(img_feature_dim + question_dim, 2000),
             nn.ReLU(),
             nn.Linear(2000, 2000),
             nn.ReLU(),
@@ -343,7 +386,7 @@ class RelationalReasoningModel(nn.Module):
         Performs a forward pass through the network, processing the image and question to produce an output.
     """
 
-    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form, image_form):
         """
         Initializes the RelationalReasoningModel with an ImageEncoder, QuestionEncoder, and RelationalNetwork.
 
@@ -364,10 +407,20 @@ class RelationalReasoningModel(nn.Module):
         """
         super(RelationalReasoningModel, self).__init__()
         
-        if img_arch == 'cnn':
-            self.image_encoder = CNNImageEncoder()    
+        if image_form == 'image':
+            if img_arch == 'cnn':
+                self.image_encoder = CNNImageEncoder()
+                self.img_feature_dim = 2 * (256 + 2)  # 1 object pair, each object has 256 features +2 for spatial coordinates (x, y)
+            elif img_arch == 'resnet':
+                self.image_encoder = ResNetImageEncoder(return_object_features=True)
+                self.img_feature_dim = 2 * 512
+            else:
+                raise ValueError(f"Unsupported image architecture: {img_arch}")
+        elif image_form == 'matrix':
+            self.image_encoder = FactoredRepresentationEncoder()
+            self.img_feature_dim = 2 * 12
         else:
-            self.image_encoder = ResNetImageEncoder()
+            raise ValueError(f"Unsupported image form: {image_form}")
         
         if question_form == 'string':
             self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
@@ -377,7 +430,7 @@ class RelationalReasoningModel(nn.Module):
         else:
             raise ValueError(f"Unsupported question form: {question_form}")  
 
-        self.relation_network = RelationalNetwork(hidden_size, num_classes)
+        self.relation_network = RelationalNetwork(hidden_size, num_classes, self.img_feature_dim)
     
     def forward(self, image, question):
         """
@@ -411,18 +464,24 @@ class BaselineModel(nn.Module):
     any relational reasoning module. Matches the CNN+MLP baseline from the Sort-of-CLEVR paper.
     """
 
-    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form):
+    def __init__(self, img_arch, vocab_size, embed_size, hidden_size, num_layers, num_classes, question_form, image_form):
         super(BaselineModel, self).__init__()
 
         # image encoder
-        if img_arch == 'cnn':
-            self.image_encoder = CNNImageEncoder()  # Output shape: (batch_size, 256, 5, 5)
-            self.img_feature_dim = 5 * 5 * (256 + 2)  # +2 for spatial coordinates (x, y)
-        elif img_arch == 'resnet':
-            self.image_encoder = ResNetImageEncoder()  # Output shape: (batch_size, 512, 7, 7)
-            self.img_feature_dim = 512 * 7 * 7
+        if image_form == 'image':
+            if img_arch == 'cnn':
+                self.image_encoder = CNNImageEncoder()  # output shape: (batch_size, 256, 5, 5)
+                self.img_feature_dim = 5 * 5 * (256 + 2)  # +2 for spatial coordinates (x, y)
+            elif img_arch == 'resnet':
+                self.image_encoder = ResNetImageEncoder(return_object_features=False)  # output shape: (batch_size, 512, 7, 7)
+                self.img_feature_dim = 512 * 7 * 7
+            else:
+                raise ValueError(f"Unsupported image architecture: {img_arch}")
+        elif image_form == 'matrix':
+            self.image_encoder = FactoredRepresentationEncoder() # output shape: (batch_size, 6, 12)
+            self.img_feature_dim = 6 * 12
         else:
-            raise ValueError(f"Unsupported image architecture: {img_arch}")
+            raise ValueError(f"Unsupported image form: {image_form}")
 
         # question encoder
         if question_form == 'string':
@@ -515,7 +574,8 @@ class ModelConstructor:
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
                 num_classes=kwargs['num_classes'],
-                question_form=kwargs['question_form']
+                question_form=kwargs['question_form'],
+                image_form=kwargs['image_form']
                 
             )
         elif model_type == 'relational':
@@ -526,7 +586,8 @@ class ModelConstructor:
                 hidden_size=kwargs['hidden_size'],
                 num_layers=kwargs['num_layers'],
                 num_classes=kwargs['num_classes'],
-                question_form=kwargs['question_form']
+                question_form=kwargs['question_form'],
+                image_form=kwargs['image_form']
             )
         elif model_type == 'onnx':
             return self._load_custom_model_onnx(kwargs['onnx_path'])
