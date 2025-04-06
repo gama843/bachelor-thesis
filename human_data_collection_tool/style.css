@@ -1,0 +1,216 @@
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#main-wrapper {
+    max-width: 800px;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* --- intro section --- */
+#intro-container h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#intro-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    text-align: left;
+    margin-bottom: 25px;
+}
+
+#instructions {
+    flex: 2;
+    min-width: 300px;
+    line-height: 1.6;
+    color: #555;
+}
+
+#instructions .highlight {
+    font-weight: bold;
+    color: #d9534f; /* reddish color for emphasis */
+}
+
+#instructions ul {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-left: 25px;
+}
+
+#instructions ul li {
+    margin-bottom: 5px;
+}
+
+#example-image-container {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+}
+
+#example-image {
+    max-width: 100%;
+    max-height: 150px;
+    border: 1px solid #ccc;
+    margin-bottom: 5px;
+    background-color: #eee;
+    min-height: 50px;
+}
+#example-image-container p {
+    font-size: 0.85em;
+    color: #777;
+    margin: 0;
+}
+
+#start-button {
+    padding: 12px 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+    margin-top: 15px;
+}
+#start-button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+#start-button:not(:disabled):hover {
+    background-color: #4cae4c;
+}
+
+#loading-error {
+    margin-top: 15px;
+    font-weight: bold;
+    color: red;
+}
+
+/* --- test container --- */
+#status, #timer {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+#timer {
+    font-weight: bold;
+    color: #d9534f;
+}
+
+#image-container {
+    margin-bottom: 20px;
+    min-height: 100px;
+    background-color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ddd;
+}
+
+#test-image {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+}
+
+#question-container {
+    margin-bottom: 25px;
+    min-height: 3em;
+}
+
+#question-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #444;
+    margin: 0;
+}
+
+#answers-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    min-height: 45px;
+}
+
+#answers-container button {
+    padding: 10px 15px;
+    font-size: 1em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    min-width: 80px;
+}
+
+#answers-container button:hover {
+    background-color: #e0e0e0;
+}
+
+/* --- results container --- */
+#results-container {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    background-color: #e9f5e9;
+    border-radius: 5px;
+    text-align: center;
+}
+#results-container h2 {
+     color: #333;
+     margin-bottom: 15px;
+}
+#results-container p {
+    color: #444;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+#plot-container {
+    max-width: 600px;
+    margin: 25px auto;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#results-chart { 
+    max-width: 100%;
+    height: auto;
+}
+
+#download-link {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #5cb85c;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
+#download-link:hover {
+    background-color: #4cae4c;
+}
+/* error download link */
+#download-link.error {
+    background-color: #d9534f; 
+}
+#download-link.error:hover {
+     background-color: #c9302c;
+}

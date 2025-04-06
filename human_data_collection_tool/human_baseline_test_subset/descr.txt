@@ -1,0 +1,200 @@
+human_baseline_test_subset/7931.png	What is the shape of the object that is farthest from the orange object?	square	00010010010
+human_baseline_test_subset/5382.png	How many objects have the shape of the yellow object?	5	00000110001
+human_baseline_test_subset/8404.png	Is the blue object on the top or the bottom?	bottom	00100001100
+human_baseline_test_subset/7931.png	What is the color of the object that is closest to the red object?	blue	10000010100
+human_baseline_test_subset/8343.png	What is the color of the object that is closest to the blue object?	red	00100010100
+human_baseline_test_subset/7808.png	Is the red object on the left or the right?	right	10000001010
+human_baseline_test_subset/6688.png	Is the blue object on the left or the right?	right	00100001010
+human_baseline_test_subset/8179.png	Is the green object on the left or the right?	left	01000001010
+human_baseline_test_subset/312.png	What is the shape of the orange object?	circle	00010001001
+human_baseline_test_subset/8081.png	Is the blue object on the top or the bottom?	bottom	00100001100
+human_baseline_test_subset/972.png	What is the shape of the object that is farthest from the green object?	square	01000010010
+human_baseline_test_subset/3974.png	Is the orange object on the top or the bottom?	top	00010001100
+human_baseline_test_subset/5704.png	Is the orange object on the top or the bottom?	top	00010001100
+human_baseline_test_subset/3351.png	What is the shape of the object that is farthest from the red object?	circle	10000010010
+human_baseline_test_subset/2546.png	What is the shape of the object that is farthest from the red object?	circle	10000010010
+human_baseline_test_subset/252.png	What is the color of the object that is closest to the yellow object?	blue	00000110100
+human_baseline_test_subset/7842.png	Is the orange object on the left or the right?	right	00010001010
+human_baseline_test_subset/9931.png	What is the color of the object that is closest to the red object?	pink	10000010100
+human_baseline_test_subset/4614.png	What is the shape of the blue object?	circle	00100001001
+human_baseline_test_subset/7508.png	What is the color of the object that is closest to the pink object?	green	00001010100
+human_baseline_test_subset/7931.png	Is the green object on the left or the right?	right	01000001010
+human_baseline_test_subset/1316.png	Is the yellow object on the top or the bottom?	top	00000101100
+human_baseline_test_subset/577.png	What is the color of the object that is closest to the red object?	yellow	10000010100
+human_baseline_test_subset/6502.png	How many objects have the shape of the red object?	3	10000010001
+human_baseline_test_subset/9921.png	Is the pink object on the top or the bottom?	top	00001001100
+human_baseline_test_subset/4948.png	How many objects have the shape of the orange object?	3	00010010001
+human_baseline_test_subset/4000.png	Is the red object on the left or the right?	left	10000001010
+human_baseline_test_subset/6688.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/7232.png	How many objects have the shape of the pink object?	4	00001010001
+human_baseline_test_subset/1510.png	Is the orange object on the top or the bottom?	bottom	00010001100
+human_baseline_test_subset/5273.png	What is the color of the object that is closest to the blue object?	green	00100010100
+human_baseline_test_subset/8404.png	What is the color of the object that is closest to the green object?	blue	01000010100
+human_baseline_test_subset/5795.png	What is the shape of the yellow object?	circle	00000101001
+human_baseline_test_subset/8314.png	What is the color of the object that is closest to the yellow object?	green	00000110100
+human_baseline_test_subset/81.png	What is the color of the object that is closest to the green object?	orange	01000010100
+human_baseline_test_subset/9055.png	How many objects have the shape of the green object?	6	01000010001
+human_baseline_test_subset/7458.png	What is the shape of the blue object?	circle	00100001001
+human_baseline_test_subset/3788.png	Is the blue object on the left or the right?	right	00100001010
+human_baseline_test_subset/7217.png	How many objects have the shape of the red object?	2	10000010001
+human_baseline_test_subset/9203.png	Is the red object on the top or the bottom?	top	10000001100
+human_baseline_test_subset/4685.png	What is the shape of the red object?	square	10000001001
+human_baseline_test_subset/8329.png	What is the shape of the yellow object?	circle	00000101001
+human_baseline_test_subset/7236.png	What is the color of the object that is closest to the orange object?	yellow	00010010100
+human_baseline_test_subset/1124.png	Is the yellow object on the left or the right?	right	00000101010
+human_baseline_test_subset/9645.png	What is the shape of the blue object?	circle	00100001001
+human_baseline_test_subset/4195.png	What is the shape of the blue object?	square	00100001001
+human_baseline_test_subset/8329.png	How many objects have the shape of the red object?	4	10000010001
+human_baseline_test_subset/6844.png	How many objects have the shape of the orange object?	4	00010010001
+human_baseline_test_subset/1225.png	How many objects have the shape of the yellow object?	4	00000110001
+human_baseline_test_subset/3155.png	How many objects have the shape of the orange object?	1	00010010001
+human_baseline_test_subset/3232.png	How many objects have the shape of the green object?	5	01000010001
+human_baseline_test_subset/2345.png	What is the color of the object that is closest to the red object?	pink	10000010100
+human_baseline_test_subset/5273.png	How many objects have the shape of the red object?	3	10000010001
+human_baseline_test_subset/6591.png	Is the green object on the top or the bottom?	bottom	01000001100
+human_baseline_test_subset/959.png	What is the shape of the orange object?	circle	00010001001
+human_baseline_test_subset/9318.png	What is the color of the object that is closest to the blue object?	pink	00100010100
+human_baseline_test_subset/2068.png	What is the shape of the object that is farthest from the red object?	circle	10000010010
+human_baseline_test_subset/9318.png	What is the shape of the object that is farthest from the pink object?	square	00001010010
+human_baseline_test_subset/4072.png	What is the color of the object that is closest to the orange object?	blue	00010010100
+human_baseline_test_subset/5675.png	How many objects have the shape of the pink object?	1	00001010001
+human_baseline_test_subset/8244.png	What is the color of the object that is closest to the red object?	yellow	10000010100
+human_baseline_test_subset/577.png	Is the yellow object on the top or the bottom?	bottom	00000101100
+human_baseline_test_subset/6253.png	What is the color of the object that is closest to the yellow object?	blue	00000110100
+human_baseline_test_subset/3007.png	How many objects have the shape of the green object?	3	01000010001
+human_baseline_test_subset/3146.png	Is the green object on the left or the right?	right	01000001010
+human_baseline_test_subset/2250.png	How many objects have the shape of the red object?	4	10000010001
+human_baseline_test_subset/4270.png	Is the pink object on the left or the right?	right	00001001010
+human_baseline_test_subset/8447.png	Is the orange object on the top or the bottom?	top	00010001100
+human_baseline_test_subset/7508.png	What is the shape of the red object?	square	10000001001
+human_baseline_test_subset/9413.png	Is the red object on the left or the right?	right	10000001010
+human_baseline_test_subset/8848.png	What is the shape of the pink object?	circle	00001001001
+human_baseline_test_subset/417.png	Is the blue object on the left or the right?	right	00100001010
+human_baseline_test_subset/953.png	What is the shape of the object that is farthest from the pink object?	square	00001010010
+human_baseline_test_subset/5528.png	Is the green object on the top or the bottom?	top	01000001100
+human_baseline_test_subset/6682.png	Is the pink object on the left or the right?	right	00001001010
+human_baseline_test_subset/3338.png	Is the blue object on the left or the right?	left	00100001010
+human_baseline_test_subset/4082.png	What is the shape of the object that is farthest from the pink object?	circle	00001010010
+human_baseline_test_subset/97.png	How many objects have the shape of the orange object?	4	00010010001
+human_baseline_test_subset/577.png	What is the shape of the object that is farthest from the orange object?	circle	00010010010
+human_baseline_test_subset/8895.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/1761.png	What is the color of the object that is closest to the red object?	yellow	10000010100
+human_baseline_test_subset/7939.png	How many objects have the shape of the red object?	5	10000010001
+human_baseline_test_subset/765.png	What is the shape of the orange object?	circle	00010001001
+human_baseline_test_subset/36.png	How many objects have the shape of the pink object?	3	00001010001
+human_baseline_test_subset/4522.png	What is the color of the object that is closest to the yellow object?	pink	00000110100
+human_baseline_test_subset/4948.png	Is the blue object on the left or the right?	right	00100001010
+human_baseline_test_subset/8404.png	What is the shape of the object that is farthest from the red object?	square	10000010010
+human_baseline_test_subset/3913.png	How many objects have the shape of the blue object?	3	00100010001
+human_baseline_test_subset/3571.png	Is the yellow object on the left or the right?	left	00000101010
+human_baseline_test_subset/5382.png	How many objects have the shape of the green object?	5	01000010001
+human_baseline_test_subset/6688.png	How many objects have the shape of the red object?	4	10000010001
+human_baseline_test_subset/3899.png	How many objects have the shape of the red object?	3	10000010001
+human_baseline_test_subset/8343.png	What is the shape of the object that is farthest from the green object?	circle	01000010010
+human_baseline_test_subset/8576.png	How many objects have the shape of the pink object?	5	00001010001
+human_baseline_test_subset/8128.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/9413.png	What is the shape of the yellow object?	square	00000101001
+human_baseline_test_subset/32.png	What is the shape of the object that is farthest from the green object?	square	01000010010
+human_baseline_test_subset/3466.png	What is the shape of the green object?	square	01000001001
+human_baseline_test_subset/4203.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/7059.png	What is the shape of the object that is farthest from the pink object?	circle	00001010010
+human_baseline_test_subset/3007.png	How many objects have the shape of the pink object?	3	00001010001
+human_baseline_test_subset/6253.png	How many objects have the shape of the yellow object?	3	00000110001
+human_baseline_test_subset/81.png	Is the orange object on the left or the right?	right	00010001010
+human_baseline_test_subset/3351.png	Is the red object on the left or the right?	right	10000001010
+human_baseline_test_subset/6364.png	What is the shape of the object that is farthest from the orange object?	circle	00010010010
+human_baseline_test_subset/3306.png	How many objects have the shape of the red object?	3	10000010001
+human_baseline_test_subset/972.png	Is the red object on the top or the bottom?	bottom	10000001100
+human_baseline_test_subset/4203.png	How many objects have the shape of the orange object?	3	00010010001
+human_baseline_test_subset/6443.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/1113.png	How many objects have the shape of the yellow object?	4	00000110001
+human_baseline_test_subset/36.png	What is the color of the object that is closest to the red object?	blue	10000010100
+human_baseline_test_subset/9931.png	How many objects have the shape of the green object?	3	01000010001
+human_baseline_test_subset/2593.png	Is the blue object on the left or the right?	left	00100001010
+human_baseline_test_subset/3007.png	What is the color of the object that is closest to the pink object?	yellow	00001010100
+human_baseline_test_subset/8314.png	Is the yellow object on the top or the bottom?	bottom	00000101100
+human_baseline_test_subset/2166.png	What is the shape of the yellow object?	circle	00000101001
+human_baseline_test_subset/4743.png	Is the yellow object on the left or the right?	right	00000101010
+human_baseline_test_subset/4823.png	Is the yellow object on the left or the right?	right	00000101010
+human_baseline_test_subset/8182.png	What is the shape of the green object?	square	01000001001
+human_baseline_test_subset/4217.png	What is the color of the object that is closest to the blue object?	pink	00100010100
+human_baseline_test_subset/5675.png	What is the shape of the object that is farthest from the pink object?	square	00001010010
+human_baseline_test_subset/322.png	How many objects have the shape of the blue object?	3	00100010001
+human_baseline_test_subset/322.png	What is the shape of the object that is farthest from the pink object?	square	00001010010
+human_baseline_test_subset/5590.png	Is the red object on the top or the bottom?	bottom	10000001100
+human_baseline_test_subset/3146.png	What is the shape of the object that is farthest from the green object?	square	01000010010
+human_baseline_test_subset/6473.png	What is the shape of the orange object?	circle	00010001001
+human_baseline_test_subset/7232.png	Is the green object on the left or the right?	right	01000001010
+human_baseline_test_subset/577.png	How many objects have the shape of the blue object?	5	00100010001
+human_baseline_test_subset/6443.png	How many objects have the shape of the yellow object?	3	00000110001
+human_baseline_test_subset/6040.png	What is the color of the object that is closest to the pink object?	green	00001010100
+human_baseline_test_subset/3818.png	What is the color of the object that is closest to the blue object?	green	00100010100
+human_baseline_test_subset/7931.png	Is the blue object on the left or the right?	right	00100001010
+human_baseline_test_subset/4994.png	How many objects have the shape of the blue object?	2	00100010001
+human_baseline_test_subset/7808.png	Is the red object on the top or the bottom?	top	10000001100
+human_baseline_test_subset/971.png	What is the color of the object that is closest to the green object?	blue	01000010100
+human_baseline_test_subset/5197.png	How many objects have the shape of the red object?	2	10000010001
+human_baseline_test_subset/7939.png	Is the green object on the top or the bottom?	top	01000001100
+human_baseline_test_subset/5675.png	What is the color of the object that is closest to the red object?	orange	10000010100
+human_baseline_test_subset/2928.png	Is the yellow object on the top or the bottom?	bottom	00000101100
+human_baseline_test_subset/108.png	What is the color of the object that is closest to the green object?	yellow	01000010100
+human_baseline_test_subset/4082.png	How many objects have the shape of the green object?	3	01000010001
+human_baseline_test_subset/1057.png	What is the shape of the blue object?	circle	00100001001
+human_baseline_test_subset/4904.png	What is the color of the object that is closest to the pink object?	green	00001010100
+human_baseline_test_subset/6688.png	Is the green object on the left or the right?	left	01000001010
+human_baseline_test_subset/1316.png	What is the shape of the blue object?	square	00100001001
+human_baseline_test_subset/8001.png	Is the orange object on the top or the bottom?	top	00010001100
+human_baseline_test_subset/9055.png	What is the shape of the red object?	square	10000001001
+human_baseline_test_subset/4387.png	How many objects have the shape of the yellow object?	3	00000110001
+human_baseline_test_subset/3161.png	What is the shape of the green object?	circle	01000001001
+human_baseline_test_subset/3071.png	What is the color of the object that is closest to the blue object?	red	00100010100
+human_baseline_test_subset/4626.png	What is the shape of the object that is farthest from the green object?	square	01000010010
+human_baseline_test_subset/7059.png	Is the yellow object on the left or the right?	left	00000101010
+human_baseline_test_subset/8159.png	What is the color of the object that is closest to the orange object?	green	00010010100
+human_baseline_test_subset/8363.png	Is the red object on the left or the right?	right	10000001010
+human_baseline_test_subset/9318.png	Is the blue object on the top or the bottom?	bottom	00100001100
+human_baseline_test_subset/6034.png	Is the yellow object on the left or the right?	left	00000101010
+human_baseline_test_subset/312.png	Is the orange object on the left or the right?	left	00010001010
+human_baseline_test_subset/6844.png	Is the pink object on the left or the right?	left	00001001010
+human_baseline_test_subset/7826.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/30.png	How many objects have the shape of the orange object?	3	00010010001
+human_baseline_test_subset/2166.png	What is the shape of the object that is farthest from the pink object?	square	00001010010
+human_baseline_test_subset/7059.png	What is the color of the object that is closest to the blue object?	red	00100010100
+human_baseline_test_subset/1374.png	How many objects have the shape of the pink object?	5	00001010001
+human_baseline_test_subset/8847.png	How many objects have the shape of the green object?	3	01000010001
+human_baseline_test_subset/7217.png	What is the color of the object that is closest to the yellow object?	pink	00000110100
+human_baseline_test_subset/9784.png	How many objects have the shape of the orange object?	4	00010010001
+human_baseline_test_subset/800.png	What is the shape of the orange object?	circle	00010001001
+human_baseline_test_subset/6591.png	How many objects have the shape of the green object?	5	01000010001
+human_baseline_test_subset/8285.png	What is the shape of the red object?	circle	10000001001
+human_baseline_test_subset/1057.png	What is the shape of the orange object?	square	00010001001
+human_baseline_test_subset/1262.png	What is the color of the object that is closest to the green object?	orange	01000010100
+human_baseline_test_subset/5382.png	What is the shape of the object that is farthest from the yellow object?	square	00000110010
+human_baseline_test_subset/322.png	How many objects have the shape of the pink object?	3	00001010001
+human_baseline_test_subset/8710.png	Is the orange object on the left or the right?	right	00010001010
+human_baseline_test_subset/3306.png	Is the orange object on the top or the bottom?	top	00010001100
+human_baseline_test_subset/3858.png	What is the shape of the pink object?	square	00001001001
+human_baseline_test_subset/577.png	Is the red object on the top or the bottom?	top	10000001100
+human_baseline_test_subset/6591.png	What is the shape of the object that is farthest from the orange object?	circle	00010010010
+human_baseline_test_subset/5528.png	What is the color of the object that is closest to the yellow object?	green	00000110100
+human_baseline_test_subset/8021.png	What is the shape of the yellow object?	circle	00000101001
+human_baseline_test_subset/5704.png	Is the red object on the top or the bottom?	top	10000001100
+human_baseline_test_subset/4904.png	What is the color of the object that is closest to the red object?	yellow	10000010100
+human_baseline_test_subset/4948.png	What is the shape of the yellow object?	circle	00000101001
+human_baseline_test_subset/8159.png	What is the color of the object that is closest to the blue object?	yellow	00100010100
+human_baseline_test_subset/3571.png	What is the shape of the object that is farthest from the green object?	circle	01000010010
+human_baseline_test_subset/4050.png	What is the color of the object that is closest to the yellow object?	red	00000110100
+human_baseline_test_subset/6040.png	How many objects have the shape of the pink object?	5	00001010001
+human_baseline_test_subset/6791.png	How many objects have the shape of the orange object?	5	00010010001
+human_baseline_test_subset/4382.png	What is the shape of the object that is farthest from the green object?	circle	01000010010
+human_baseline_test_subset/8128.png	Is the orange object on the left or the right?	right	00010001010
+human_baseline_test_subset/252.png	What is the shape of the orange object?	square	00010001001
+human_baseline_test_subset/1348.png	What is the color of the object that is closest to the blue object?	yellow	00100010100
+human_baseline_test_subset/3040.png	Is the yellow object on the left or the right?	right	00000101010
+human_baseline_test_subset/5441.png	How many objects have the shape of the orange object?	4	00010010001
+human_baseline_test_subset/9418.png	Is the pink object on the top or the bottom?	bottom	00001001100
+human_baseline_test_subset/9784.png	Is the orange object on the top or the bottom?	bottom	00010001100
+human_baseline_test_subset/8820.png	What is the shape of the object that is farthest from the pink object?	circle	00001010010
+human_baseline_test_subset/9656.png	What is the shape of the object that is farthest from the orange object?	circle	00010010010
+human_baseline_test_subset/3411.png	Is the orange object on the top or the bottom?	bottom	00010001100
+human_baseline_test_subset/4000.png	How many objects have the shape of the red object?	6	10000010001

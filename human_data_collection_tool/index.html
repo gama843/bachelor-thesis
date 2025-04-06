@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasoning test</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div id="main-wrapper">
+
+        <!-- intro -->
+        <div id="intro-container">
+            <h1>Test of relational reasoning</h1>
+            <div id="intro-content">
+                <p id="instructions">
+                    Welcome! This test helps establish a human baseline for visual relational reasoning.
+                    <br><br>
+                    You will be shown images containing simple shapes of different colors and positions, like the example below.
+                    For each image, a question will appear. Please answer as quickly and accurately as possible.
+                    <br>
+                    <b>You will have <span class="highlight">8 seconds</span> for each question.</b>
+                    <br><br>
+                    Questions might ask about:
+                    <ul>
+                        <li><b>Position</b> (e.g., "Is the red object on the top or bottom?", "Is the green object left or right?")</li>
+                        <li><b>Attributes</b> (e.g., "What is the shape of the blue object?")</li>
+                        <li><b>Relationships</b> (e.g., "What is the color of the object closest to the yellow object?", "What is the shape of the object farthest from the pink object?")</li>
+                        <li><b>Counting</b> (e.g., "How many objects have the shape of the yellow object?")</li>
+                    </ul>
+                    Possible answers include directions (top, bottom, left, right), shapes (circle, square), colors (red, blue, green, etc.), or counts (1-6).
+                    <br><br>
+                    Press Start when you are ready. Good luck!
+                </p>
+                <div id="example-image-container">
+                    <img id="example-image" src="" alt="Example Image Loading...">
+                    <p><i>Example Image</i></p>
+                </div>
+            </div>
+             <p id="loading-error" style="color: red; display: none;"></p>
+            <button id="start-button" disabled>Loading Data...</button>
+        </div>
+
+        <!-- test section -->
+        <div id="test-container" style="display: none;">
+           <div id="status">Loading...</div>
+           <div id="timer">Time left: <span id="time">8</span>s</div>
+           <div id="image-container">
+               <img id="test-image" src="" alt="Test Image">
+           </div>
+           <div id="question-container">
+               <p id="question-text">Question will appear here.</p>
+           </div>
+           <div id="answers-container">
+               <!-- generated buttons-->
+           </div>
+        </div>
+
+         <!-- results -->
+         <div id="results-container" style="display: none;">
+             <h2>Test Complete - Thank You!</h2>
+             <p>Thank you very much for participating in this research study!</p>
+             <p>Your results summary is shown below. You can download a ZIP file containing this plot and your detailed results (JSON).</p>
+             <!-- plot -->
+             <div id="plot-container">
+                 <canvas id="results-chart"></canvas> <!-- Canvas element for the chart -->
+             </div>
+             <p>Session ID: <span id="session-id-display"></span></p>
+             <p>
+                 <a id="download-link" href="#" download="">Download Results ZIP</a>
+             </p>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
