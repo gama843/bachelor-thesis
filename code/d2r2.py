@@ -3,7 +3,6 @@ import torch
 import numpy as np
 import random
 import os
-import datetime
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -11,7 +10,7 @@ warnings.filterwarnings("ignore")
 # reproducibility: 
 
 # fix the random seed 
-seed = 42
+seed = 11
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -32,6 +31,7 @@ from models import ModelConstructor
 from dataset_builder import DatasetBuilder, collate_fn
 from training import validate_one_epoch, train_and_validate, save_train_answer_distribution, compute_baseline_performance
 from llms import run_llm_evaluation
+from utils import get_experiment_name
 
 def main():
     parser = argparse.ArgumentParser(
@@ -57,19 +57,17 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 50
-        num_epochs = 1
+        num_images = 100
+        num_epochs = 2
         batch_size = 64
-        model_type = 'baseline'
-        img_arch = 'cnn'
+        model_type = 'relational'
+        image_form = 'image'
+        img_arch = 'resnet'
         question_form = 'binary'
         note = ''
         continue_training = False
 
-        today = datetime.datetime.now().strftime("%d%m%Y")       
-        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{img_arch}_{question_form}_{seed}"
-        if note:
-            experiment_dir += '_' + note
+        experiment_dir = get_experiment_name(num_images, model_type, image_form, question_form, seed, img_arch, note)
         data_dir = os.path.join(experiment_dir, 'data')
 
         generator = DataGenerator(data_dir)
@@ -101,16 +99,18 @@ def main():
             hidden_size=128,
             num_layers=1,
             num_classes=len(builder.answer_vocab),
-            question_form=question_form
+            question_form=question_form,
+            image_form=image_form
         )
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
+        
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form)
+        train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, experiment_dir, question_form, image_form)
     
     else:
         # handle the provided arguments logic

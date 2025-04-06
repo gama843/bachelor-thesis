@@ -1,3 +1,5 @@
+import datetime
+
 def get_question_type_and_subtype(question_vector):
     """
     Determine the type and subtype of a question from its one-hot encoded vector.
@@ -44,3 +46,18 @@ def get_question_type_and_subtype(question_vector):
 def log_and_print(msg, file):
     print(msg)
     file.write(msg + "\n")
+
+def get_experiment_name(num_images, model_type, image_form, question_form, seed, img_arch=None, note=""):
+    today = datetime.datetime.now().strftime("%d%m%Y")
+
+    if image_form == 'image':
+        if not img_arch:
+            raise ValueError("img_arch must be specified when image_form is 'image'")
+        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{image_form}_{img_arch}_{question_form}_{seed}"
+    else:
+        experiment_dir = f"experiments/{today}_{num_images}_{model_type}_{image_form}_{question_form}_{seed}"
+
+    if note:
+        experiment_dir += f"_{note}"
+
+    return experiment_dir
