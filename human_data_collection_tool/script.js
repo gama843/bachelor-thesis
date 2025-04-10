@@ -63,23 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let resultsChartInstance = null;
 
     function initAudio() {
-        try {
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!window.AudioContext) {
-                console.warn("Web Audio API is not supported."); return;
-            }
-            audioContext = new AudioContext();
-            fetch(AUDIO_PATH)
-                .then(response => {
-                    if (!response.ok) throw new Error(`Audio load error: ${response.status}`);
-                    return response.arrayBuffer();
-                })
-                .then(buffer => audioContext.decodeAudioData(buffer))
-                .then(decoded => { nextSoundBuffer = decoded; console.log("Audio loaded."); })
-                .catch(e => console.error("Audio init failed:", e));
-        } catch (e) {
-            console.error("AudioContext init error:", e);
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!window.AudioContext) {
+            return;
         }
+        audioContext = new AudioContext();
+        fetch(AUDIO_PATH)
+            .then(response => {
+                if (!response.ok) throw new Error(`Audio load error: ${response.status}`);
+                return response.arrayBuffer();
+            })
+            .then(buffer => audioContext.decodeAudioData(buffer))
+            .then(decoded => { nextSoundBuffer = decoded; })
+            .catch(e => console.error("Audio init failed:", e));
     }
 
     function playSound() {
@@ -121,30 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function parseTextData(text) {
         allQuestions = [];
         const lines = text.split('\n');
-        console.log(`Read ${lines.length} lines from description file.`);
 
         lines.forEach((line, index) => {
             const trimmedLine = line.trim();
             if (!trimmedLine) return;
 
             const parts = trimmedLine.split('\t');
-            if (parts.length !== 4) {
-                console.warn(`Skipping line ${index + 1}: Incorrect number of columns (${parts.length}). Expected 4.`);
-                return;
-            }
 
             const [imagePath, question, correctAnswer, vectorString] = parts;
 
-            if (!/^[01]+$/.test(vectorString)) {
-                 console.warn(`Skipping line ${index + 1}: Invalid characters in question vector string: ${vectorString}`);
-                 return;
-            }
             const question_vector = vectorString.split('').map(Number);
-
-             if (!Array.isArray(question_vector) || question_vector.length < 11) {
-                 console.warn(`Skipping line ${index + 1} for image ${imagePath}: Invalid or too short question vector (length ${question_vector.length}).`);
-                 return;
-             }
 
             allQuestions.push({
                 imagePath: imagePath,
@@ -153,8 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 question_vector: question_vector
             });
         });
-
-        console.log(`Successfully parsed ${allQuestions.length} valid questions.`);
     }
 
 
@@ -180,8 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startButton.textContent = "Start Test";
             })
             .catch(error => {
-                console.error("Initial load error:", error);
-                loadingErrorEl.textContent = `Error loading data: ${error.message}. Cannot start. Check console, file path (${TXT_PATH}), and file format.`;
+                loadingErrorEl.textContent = `Error loading data: ${error.message}.`;
                 loadingErrorEl.style.display = 'block';
                 startButton.textContent = "Error Loading";
             });
@@ -193,13 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
             exampleImageEl.alt = "Example visual reasoning image";
         } else {
              exampleImageEl.alt = "Could not load example image - no questions parsed";
-             console.warn("No questions available to display an example image.");
         }
     }
 
     function initializeTest() {
         if (allQuestions.length === 0) {
-            console.error("Cannot initialize test - no questions loaded.");
             statusDiv.textContent = 'Error: No questions available.';
             statusDiv.style.color = 'red';
              testContainer.style.display = 'none';
@@ -234,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startSession() {
         if (allQuestions.length === 0) {
-            console.error("Attempted to start session with no questions.");
             return;
         }
         sessionId = generateUUID();
@@ -368,11 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         sessionResults.forEach(res => {
-            if (!res.questionVector || res.questionVector.length < 11) {
-                console.warn("Skipping result in accuracy calculation due to invalid vector:", res);
-                return;
-            }
-
             const subtype = res.subtype;
             const isRelational = res.questionVector[6] === 1;
             const category = isRelational ? 'relational' : 'non-relational';
@@ -398,13 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
             accuracies[cat] = (totals[cat] !== undefined && totals[cat] > 0) ? (corrects[cat] / totals[cat]) : 0;
         });
 
-        console.log("Calculated Accuracies:", accuracies);
         return accuracies;
     }
 
     function generateResultsChart(accuracies) {
         if (!resultsChartCtx) {
-            console.error("Canvas context not found for chart.");
             return Promise.reject("Canvas context not found");
         }
 
@@ -465,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     animation: {
                         onComplete: () => {
-                             console.log("Chart animation complete.");
                              resolve();
                         }
                     }
@@ -477,13 +445,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function generateZip(finalOutput, chartInstance) {
          if (!chartInstance || !chartInstance.canvas) {
-            console.error("Chart instance or canvas not available for ZIP generation.");
             downloadLink.textContent = "Error creating ZIP (chart missing)";
             downloadLink.style.display = 'inline-block';
             return;
          }
          if (typeof JSZip === 'undefined') {
-            console.error("JSZip library not loaded.");
              downloadLink.textContent = "ZIP Library Error";
              downloadLink.style.display = 'inline-block';
             return;
@@ -512,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
              downloadLink.style.display = 'inline-block';
 
          } catch (error) {
-            console.error("Error generating ZIP file:", error);
             downloadLink.textContent = "Error creating ZIP";
             downloadLink.style.display = 'inline-block';
          }
@@ -524,7 +489,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sessionEndTime = new Date().toISOString();
         const totalTimeMs = sessionStartTime ? (new Date(sessionEndTime).getTime() - new Date(sessionStartTime).getTime()) : 0;
 
-        console.log("Session Ended. Calculating results...");
         testContainer.style.display = 'none';
 
         const accuracies = calculateAccuracies();
@@ -548,18 +512,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         try {
-            console.log("Generating results chart...");
             await generateResultsChart(accuracies);
-            console.log("Chart generated, preparing ZIP...");
             if (resultsChartInstance) {
                  await generateZip(finalOutput, resultsChartInstance);
-                 console.log("ZIP preparation complete.");
             } else {
-                 console.error("Chart instance not available after generation.");
                  downloadLink.textContent = "Error creating ZIP (Chart failed)";
             }
         } catch(error) {
-             console.error("Error during end session processing (chart/zip):", error);
              downloadLink.textContent = "Error creating Download";
         }
 

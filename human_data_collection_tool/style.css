@@ -16,7 +16,6 @@ body {
     text-align: center;
 }
 
-/* --- intro section --- */
 #intro-container h1 {
     color: #333;
     margin-bottom: 20px;
@@ -40,7 +39,7 @@ body {
 
 #instructions .highlight {
     font-weight: bold;
-    color: #d9534f; /* reddish color for emphasis */
+    color: #d9534f;
 }
 
 #instructions ul {
@@ -67,6 +66,7 @@ body {
     background-color: #eee;
     min-height: 50px;
 }
+
 #example-image-container p {
     font-size: 0.85em;
     color: #777;
@@ -84,10 +84,12 @@ body {
     transition: background-color 0.2s ease;
     margin-top: 15px;
 }
+
 #start-button:disabled {
     background-color: #aaa;
     cursor: not-allowed;
 }
+
 #start-button:not(:disabled):hover {
     background-color: #4cae4c;
 }
@@ -98,7 +100,6 @@ body {
     color: red;
 }
 
-/* --- test container --- */
 #status, #timer {
     color: #666;
     margin-bottom: 15px;
@@ -161,7 +162,6 @@ body {
     background-color: #e0e0e0;
 }
 
-/* --- results container --- */
 #results-container {
     margin-top: 30px;
     padding: 20px;
@@ -170,10 +170,12 @@ body {
     border-radius: 5px;
     text-align: center;
 }
+
 #results-container h2 {
      color: #333;
      margin-bottom: 15px;
 }
+
 #results-container p {
     color: #444;
     line-height: 1.5;
@@ -189,6 +191,7 @@ body {
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+
 #results-chart { 
     max-width: 100%;
     height: auto;
@@ -204,13 +207,15 @@ body {
     border-radius: 4px;
     font-weight: bold;
 }
+
 #download-link:hover {
     background-color: #4cae4c;
 }
-/* error download link */
+
 #download-link.error {
     background-color: #d9534f; 
 }
+
 #download-link.error:hover {
      background-color: #c9302c;
 }

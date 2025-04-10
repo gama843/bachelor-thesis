@@ -11,7 +11,6 @@
 <body>
     <div id="main-wrapper">
 
-        <!-- intro -->
         <div id="intro-container">
             <h1>Test of relational reasoning</h1>
             <div id="intro-content">
@@ -43,7 +42,6 @@
             <button id="start-button" disabled>Loading Data...</button>
         </div>
 
-        <!-- test section -->
         <div id="test-container" style="display: none;">
            <div id="status">Loading...</div>
            <div id="timer">Time left: <span id="time">8</span>s</div>
@@ -54,18 +52,15 @@
                <p id="question-text">Question will appear here.</p>
            </div>
            <div id="answers-container">
-               <!-- generated buttons-->
            </div>
         </div>
 
-         <!-- results -->
          <div id="results-container" style="display: none;">
              <h2>Test Complete - Thank You!</h2>
              <p>Thank you very much for participating in this research study!</p>
              <p>Your results summary is shown below. You can download a ZIP file containing this plot and your detailed results (JSON).</p>
-             <!-- plot -->
              <div id="plot-container">
-                 <canvas id="results-chart"></canvas> <!-- Canvas element for the chart -->
+                 <canvas id="results-chart"></canvas>
              </div>
              <p>Session ID: <span id="session-id-display"></span></p>
              <p>
