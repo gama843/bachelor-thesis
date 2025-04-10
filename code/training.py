@@ -6,7 +6,7 @@ from plotting import visualize_training_log
 import progressbar
 from utils import log_and_print
 
-def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form, image_form):
+def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form, image_form, patience=2):
     """
     Handles training, validation, logging, and model saving with metrics matching the paper.
 
@@ -36,12 +36,18 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
 
     os.makedirs(run_folder, exist_ok=True)
     model_path = os.path.join(run_folder, "model.pth")
+    best_model_checkpoint_path = os.path.join(run_folder, "best_model_checkpoint.pth") # tmp
     log_path = os.path.join(run_folder, "log.txt")
+
+    best_val_acc = 0.0
+    epochs_without_improvement = 0
+    best_epoch = 0
 
     total_start_time = time.time()
 
     with open(log_path, "w") as log_file:
         log_and_print(f"Training started at: {time.strftime('%Y-%m-%d %H:%M:%S')}", log_file)
+        log_and_print(f"Early stopping patience: {patience} epochs", log_file)
         
         epoch_bar = progressbar.ProgressBar(maxval=num_epochs,
                                          widgets=[progressbar.Bar('=', '[', ']'), ' ',
@@ -92,11 +98,29 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
             checkpoint_path = os.path.join(run_folder, f"checkpoint_epoch_{epoch+1}.pth")
             torch.save(model.state_dict(), checkpoint_path)
 
+            # early stopping and best model check
+            if val_accuracy > best_val_acc:
+                best_epoch = epoch + 1
+                log_and_print(f"Validation accuracy improved ({best_val_acc:.4f} --> {val_accuracy:.4f}). Saving best model (epoch {best_epoch})...", log_file)
+                best_val_acc = val_accuracy
+                torch.save(model.state_dict(), best_model_checkpoint_path)
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
+                log_and_print(f"Validation accuracy did not improve for {epochs_without_improvement} epoch(s). Best accuracy: {best_val_acc:.4f}", log_file)
+                 # exit the training loop if ran out of patience
+                if epochs_without_improvement >= patience:
+                    log_and_print(f"Early stopping triggered after {epoch + 1} epochs.", log_file)
+                    break
+
         epoch_bar.finish()
 
         total_end_time = time.time()
         total_duration = total_end_time - total_start_time
         log_and_print(f"\nTotal training time: {total_duration:.2f} seconds ({total_duration/60:.2f} minutes)", log_file)
+        
+        log_and_print(f"\nLoading best model from checkpoint (epoch {best_epoch}): {best_model_checkpoint_path} (Validation accuracy: {best_val_acc:.4f})", log_file)
+        model.load_state_dict(torch.load(best_model_checkpoint_path))
         
         log_and_print("\nEvaluating on test set...", log_file)
         test_start_time = time.time()
@@ -108,7 +132,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         log_and_print(f"Test evaluation completed in {test_duration:.2f} seconds", log_file)
 
         # log test results with the same metrics as the paper
-        log_and_print("\nTest set performance", log_file)
+        log_and_print("\nTest set performance (using best model)", log_file)
         log_and_print(f"Test loss: {test_loss:.4f}, Test accuracy: {test_accuracy:.4f}", log_file)
 
         # accuracy breakdown by question type
@@ -124,7 +148,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
                 log_and_print(f"    {subtype}: {acc:.4f}", log_file)
 
         torch.save(model.state_dict(), model_path)
-        log_and_print(f"Final model saved to {model_path}", log_file)
+        log_and_print(f"Final model (epoch {best_epoch}) saved to {model_path}", log_file)
         
         log_and_print(f"\nTraining and evaluation completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}", log_file)
 
@@ -135,7 +159,7 @@ def train_and_validate(model, train_loader, val_loader, test_loader, criterion, 
         log_and_print(f"\nGenerating training visualizations in {plots_dir}", log_file)
         
         vis_start_time = time.time()
-        visualize_training_log(log_path, plots_dir)
+        visualize_training_log(log_path, plots_dir, best_epoch)
         vis_end_time = time.time()
         vis_duration = vis_end_time - vis_start_time
         log_and_print(f"Visualization generation completed in {vis_duration:.2f} seconds", log_file)

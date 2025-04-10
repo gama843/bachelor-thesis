@@ -180,7 +180,7 @@ def create_dataframes(parsed_data):
     
     return epochs_df, test_df
 
-def visualize_training_log(log_path, output_dir=None):
+def visualize_training_log(log_path, output_dir=None, best_epoch=None):
     """
     Parses a training log and creates visualizations.
     
@@ -216,8 +216,8 @@ def visualize_training_log(log_path, output_dir=None):
     plt.plot(epochs_df['epoch'], epochs_df['validation_loss'], 's-', label='validation loss', linewidth=2)
     if test_df is not None and 'loss' in test_df.columns:
         # square marker, vertical alignment
-        last_x = epochs_df['epoch'].iloc[-1]
-        plt.plot(last_x + 0.25, test_df['loss'].iloc[0], 's', 
+        last_x = best_epoch
+        plt.plot(last_x, test_df['loss'].iloc[0], 's', 
                 markersize=10, markeredgewidth=2, color='red',
                 label=f'test loss: {test_df["loss"].iloc[0]:.4f}')
     plt.title('Training and validation loss')
@@ -236,8 +236,8 @@ def visualize_training_log(log_path, output_dir=None):
     plt.figure(figsize=(10, 6))
     plt.plot(epochs_df['epoch'], epochs_df['validation_accuracy'], 'o-', label='validation accuracy', linewidth=2)
     if test_df is not None and 'accuracy' in test_df.columns:
-        last_x = epochs_df['epoch'].iloc[-1]
-        plt.plot(last_x + 0.25, test_df['accuracy'].iloc[0], 's',
+        last_x = best_epoch
+        plt.plot(last_x, test_df['accuracy'].iloc[0], 's',
                 markersize=10, markeredgewidth=2, color='red',
                 label=f'test accuracy: {test_df["accuracy"].iloc[0]:.4f}')
 
@@ -291,7 +291,7 @@ def visualize_training_log(log_path, output_dir=None):
                                             markeredgecolor=line_color, markersize=10, markeredgewidth=2),
                                 legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
+                plt.plot(best_epoch, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
         
     if baseline_data is not None and "Accuracy by question type" in baseline_data:
@@ -354,7 +354,7 @@ def visualize_training_log(log_path, output_dir=None):
                                             markeredgecolor=line_color, markersize=10, markeredgewidth=2),
                                 legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
+                plt.plot(best_epoch, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
 
         subtype_baselines = baseline_data["Accuracy by question subtype"]
@@ -405,7 +405,7 @@ def visualize_training_log(log_path, output_dir=None):
                                             markeredgecolor=line_color, markersize=10, markeredgewidth=2),
                                 legend_label))
             if test_df is not None and col in test_df.columns:
-                plt.plot(epochs_df['epoch'].iloc[-1] + 0.25, test_df[col].iloc[0],
+                plt.plot(best_epoch, test_df[col].iloc[0],
                         's', markersize=10, markeredgewidth=2, color=line_color)
         
         subtype_baselines = baseline_data["Accuracy by question subtype"]
@@ -450,8 +450,8 @@ def visualize_training_log(log_path, output_dir=None):
 
     if test_df is not None and 'loss' in test_df.columns:
         test_loss = test_df['loss'].iloc[0]
-        last_x = epochs_df['epoch'].iloc[-1]
-        ax1.plot(last_x + 0.25, test_loss, 's', markersize=10, markeredgewidth=2, 
+        last_x = best_epoch
+        ax1.plot(last_x, test_loss, 's', markersize=10, markeredgewidth=2, 
                 color='red', label=f'test loss: {test_loss:.4f}')
 
     ax1.set_title('Training and validation loss')
@@ -467,8 +467,8 @@ def visualize_training_log(log_path, output_dir=None):
 
     if test_df is not None and 'accuracy' in test_df.columns:
         test_acc = test_df['accuracy'].iloc[0]
-        last_x = epochs_df['epoch'].iloc[-1]
-        ax2.plot(last_x + 0.25, test_acc, 's', markersize=10, markeredgewidth=2,
+        last_x = best_epoch
+        ax2.plot(last_x, test_acc, 's', markersize=10, markeredgewidth=2,
                 color='red', label=f'test accuracy: {test_acc:.4f}')
 
     overall_baselines = baseline_data["Overall accuracy"]
@@ -515,8 +515,8 @@ def visualize_training_log(log_path, output_dir=None):
         
         if test_df is not None and rel_col[0] in test_df.columns:
             test_rel_acc = test_df[rel_col[0]].iloc[0]
-            last_x = epochs_df['epoch'].iloc[-1]
-            ax3.plot(last_x + 0.25, test_rel_acc, 's', markersize=10, markeredgewidth=2, 
+            last_x = best_epoch
+            ax3.plot(last_x, test_rel_acc, 's', markersize=10, markeredgewidth=2, 
                 color=line_color_rel)
             
             legend_elements_rel_vs_nonrel.append((line_rel, 
@@ -534,8 +534,8 @@ def visualize_training_log(log_path, output_dir=None):
         
         if test_df is not None and non_rel_col[0] in test_df.columns:
             test_non_rel_acc = test_df[non_rel_col[0]].iloc[0]
-            last_x = epochs_df['epoch'].iloc[-1]
-            ax3.plot(last_x + 0.25, test_non_rel_acc, 's', markersize=10, markeredgewidth=2, 
+            last_x = best_epoch
+            ax3.plot(last_x, test_non_rel_acc, 's', markersize=10, markeredgewidth=2, 
                 color=line_color_nonrel)
             
             legend_elements_rel_vs_nonrel.append((line_nonrel, 
@@ -629,8 +629,8 @@ def visualize_training_log(log_path, output_dir=None):
         
         if test_df is not None and col in test_df.columns:
             test_subtype_acc = test_df[col].iloc[0]
-            last_x = epochs_df['epoch'].iloc[-1]
-            ax4.plot(last_x + 0.25, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
+            last_x = best_epoch
+            ax4.plot(last_x, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
                     color=line_color)
 
     subtype_baselines = baseline_data["Accuracy by question subtype"]
@@ -699,8 +699,8 @@ def visualize_training_log(log_path, output_dir=None):
         
         if test_df is not None and col in test_df.columns:
             test_subtype_acc = test_df[col].iloc[0]
-            last_x = epochs_df['epoch'].iloc[-1]
-            ax5.plot(last_x + 0.25, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
+            last_x = best_epoch
+            ax5.plot(last_x, test_subtype_acc, 's', markersize=10, markeredgewidth=2, 
                     color=line_color)
 
     subtype_baselines = baseline_data["Accuracy by question subtype"]
