@@ -885,9 +885,9 @@ class DataGenerator:
                 return "Unknown question subtype"
         else:
             if subtype == "topbottom":
-                return f"Is the {color} object on the top or the bottom?"
+                return f"Is the {color} object on the top or on the bottom?"
             elif subtype == "leftright":
-                return f"Is the {color} object on the left or the right?"
+                return f"Is the {color} object on the left or on the right?"
             elif subtype == "shape":
                 return f"What is the shape of the {color} object?"
             else:
