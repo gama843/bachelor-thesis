@@ -6,7 +6,7 @@ from plotting import visualize_training_log
 import progressbar
 from utils import log_and_print
 
-def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form, image_form, patience=2):
+def train_and_validate(model, train_loader, val_loader, test_loader, criterion, optimizer, device, num_epochs, run_folder, question_form, image_form, patience=5):
     """
     Handles training, validation, logging, and model saving with metrics matching the paper.
 
