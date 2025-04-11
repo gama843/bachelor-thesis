@@ -1,0 +1,14 @@
+{
+  "source": "aggregated_humans",
+  "accuracySummary": {
+    "shape": 0.9740259740259739,
+    "topbottom": 0.96875,
+    "leftright": 0.9545454545454546,
+    "closest": 0.7493857493857494,
+    "farthest": 0.8057142857142857,
+    "count": 0.8715415019762847,
+    "non-relational": 0.9654150197628457,
+    "relational": 0.8114478114478114,
+    "overall": 0.8822727272727273
+  }
+}

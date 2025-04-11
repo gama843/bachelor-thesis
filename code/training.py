@@ -1,4 +1,5 @@
 import os
+import json
 import torch
 import time
 import numpy as np
@@ -440,6 +441,17 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
     most_freq_acc = (most_freq_preds == all_answers).mean()
     empirical_acc = (sampled_answers == all_answers).mean()
     
+    # load average human accuracy from fixed location
+    human_path = os.path.join("human_baseline_data", "results.json")
+    try:
+        with open(human_path, "r") as f:
+            human_data = json.load(f)["accuracySummary"]
+        human_overall = human_data.get("overall", None)
+    except Exception as e:
+        print(f"Could not load human baseline data: {e}")
+        human_data = {}
+        human_overall = None
+    
     log_path = os.path.join(experiment_dir, "baseline_performance.txt")
     
     with open(log_path, "w") as log_file:
@@ -448,6 +460,8 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
         log_and_print(f"  Random guessing: {random_acc:.4f}", log_file)
         log_and_print(f"  Most frequent class: {most_freq_acc:.4f}", log_file)
         log_and_print(f"  Empirical distribution sampling: {empirical_acc:.4f}", log_file)
+        if human_overall is not None:
+            log_and_print(f"  Human average: {human_overall:.4f}", log_file)
         
         # accuracy by question type
         log_and_print("\nAccuracy by question type:", log_file)
@@ -461,6 +475,8 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
             log_and_print(f"    Random guessing: {type_random_acc:.4f}", log_file)
             log_and_print(f"    Most frequent class: {type_most_freq_acc:.4f}", log_file)
             log_and_print(f"    Empirical distribution sampling: {type_empirical_acc:.4f}", log_file)
+            if q_type in human_data:
+                log_and_print(f"    Human average: {human_data[q_type]:.4f}", log_file)
         
         # accuracy by question subtype
         log_and_print("\nAccuracy by question subtype:", log_file)
@@ -486,9 +502,12 @@ def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
                 log_and_print(f"      Random guessing: {subtype_random_acc:.4f}", log_file)
                 log_and_print(f"      Most frequent class: {subtype_most_freq_acc:.4f}", log_file)
                 log_and_print(f"      Empirical distribution sampling: {subtype_empirical_acc:.4f}", log_file)
+                if subtype in human_data:
+                    log_and_print(f"      Human average: {human_data[subtype]:.4f}", log_file)
     
     return {
         "random": random_acc,
         "most_frequent": most_freq_acc,
-        "empirical": empirical_acc
+        "empirical": empirical_acc,
+        "human": human_overall
     }

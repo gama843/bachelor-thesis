@@ -1,10 +1,9 @@
 import os
 import base64
 from collections import defaultdict
-import matplotlib.pyplot as plt
 from openai import OpenAI
 from dataset_builder import DatasetBuilder
-from utils import get_question_type_and_subtype, log_and_print
+from utils import get_question_type_and_subtype, log_and_print, plot_accuracy_breakdown
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
@@ -148,7 +147,7 @@ def model_eval(experiment_dir, model_name):
 
     log_and_print(f"Model: {model_name}", log_file)
     log_and_print(f'Test samples: {len(builder.test_samples)}', log_file)
-    for img_path, question, answer, question_vector in builder.test_samples:
+    for img_path, question, answer, question_vector, _ in builder.test_samples:
         result = evaluate_model(img_path, question, question_vector, str(answer), answer_set, model_name)
         results.append(result)
         outcome = "PASS" if result['expected_answer'] == result['model_answer'] else "FAIL"
@@ -182,22 +181,13 @@ def model_eval(experiment_dir, model_name):
         for subtype in grouped_subtypes[qtype]:
             log_and_print(f"    {subtype}: {subtype_acc[subtype]:.4f}", log_file)
 
-    labels = ["overall"] + list(type_acc.keys()) + list(subtype_acc.keys())
-    accuracies = [overall_accuracy] + [type_acc[k] for k in type_acc] + [subtype_acc[k] for k in subtype_acc]
-    colors = ["tab:red"] + ["tab:orange"] * len(type_acc) + ["tab:blue" if label in relational_subtypes else "tab:green" for label in subtype_acc]
-
-    fig, ax = plt.subplots(figsize=(10, 8))
-    ax.barh(labels, accuracies, color=colors)
-    ax.set_xlim(0, 1.05)
-    ax.set_xlabel('Accuracy')
-    ax.set_title(f'Performance overview ({model_name})')
-    ax.axvline(1.0, color='gray', linestyle='--', linewidth=0.8)
-    for i, v in enumerate(accuracies):
-        ax.text(v + 0.01, i, f"{v:.4f}", va='center', fontsize=9)
-
-    plt.tight_layout()
-    plot_path = os.path.join(experiment_dir, f"performance_overview_{model_name}.png")
-    plt.savefig(plot_path)
+    plot_path = plot_accuracy_breakdown(
+        overall_accuracy,
+        type_acc,
+        subtype_acc,
+        model_name,
+        experiment_dir
+    )
     log_and_print(f"Plot saved to {plot_path}", log_file)
     log_file.close()
 
