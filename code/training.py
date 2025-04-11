@@ -373,10 +373,11 @@ def load_answer_distribution(experiment_dir):
 
 def compute_baseline_performance(test_loader, answer_vocab, experiment_dir):
     """
-    Compute performance of three baselines:
+    Compute performance of four baselines:
     1. Random guessing from answer_vocab
     2. Most frequent class prediction
     3. Sampling from empirical distribution
+    4. Human average (if data are available)
     
     Parameters:
     -----------
