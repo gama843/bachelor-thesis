@@ -129,7 +129,7 @@ class DataGenerator:
             y2 = np.random.randint(y1 + 10, self.img_dim - thickness - 10)
         cv2.rectangle(img, (x1, y1), (x2, y2), color, thickness)
         
-        return img, ((x1, y1), (x2, y2))        
+        return img, ((x1, y1), (x2, y2))
     
     def _gen_square(self, img, color, fill):
         """

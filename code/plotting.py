@@ -490,13 +490,15 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
         elif "empirical distribution sampling" in label.lower():
             ax2.axhline(y=value, linestyle="--", color="purple")
             ax2.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="purple", fontsize=8)
+        elif "human average" in label.lower():
+            ax2.axhline(y=value, linestyle="--", color="brown")
+            ax2.text(x_pos, value + 0.003, f"{label.lower()}", va='bottom', color="brown", fontsize=8)            
 
     ax2.set_title('Overall validation accuracy')
     ax2.set_xlabel('Epoch')
     ax2.set_ylabel('Accuracy')
     ax2.set_xticks(epochs_df['epoch'])
-    ax2.set_ylim(0, max(epochs_df['validation_accuracy'].max() * 1.1, 
-                    test_df['accuracy'].iloc[0] * 1.1 if test_df is not None and 'accuracy' in test_df.columns else 0))
+    ax2.set_ylim(0, 1)
     ax2.legend(loc='upper left')
     ax2.grid(True)
 
@@ -565,6 +567,19 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
                 ax3.axhline(y=value, linestyle=linestyle, color="black")
                 ax3.text(x_pos, value + 0.003, f"{type_name} most frequent class", 
                     va='bottom', color="black", fontsize=8)
+                
+            if "human average" in baseline_label.lower():
+                x_pos = min(epochs_df['epoch'])
+                
+                for y_val in used_y_positions.keys():
+                    if abs(y_val - value) < 0.02:
+                        x_pos = min(epochs_df['epoch']) + (max(epochs_df['epoch']) - min(epochs_df['epoch'])) * 0.35
+                
+                used_y_positions[value] = x_pos
+                
+                ax3.axhline(y=value, linestyle="--", color="brown")
+                ax3.text(x_pos, value + 0.003, f"{type_name} human average", 
+                    va='bottom', color="brown", fontsize=8)
 
     ax3.set_title('Relational vs non-relational validation accuracy')
     ax3.set_xlabel('Epoch')
@@ -584,7 +599,7 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
         if test_vals:
             max_val = max(max_val, max(test_vals))
             
-        ax3.set_ylim(0, max_val * 1.1)
+        ax3.set_ylim(0, 1)
 
     formatted_handles = []
     formatted_labels = []
@@ -681,6 +696,7 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
 
     # plot 5: non-relational question subtypes (bottom right)
     ax5 = plt.subplot(gs[2, 1])
+
     non_rel_subtype_cols = [col for col in epochs_df.columns if col.startswith('acc_non-relational_')]
 
     legend_elements = []
@@ -721,6 +737,7 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
                     ax5.axhline(y=value, linestyle="--", color="black")
                     ax5.text(x_pos, value + 0.003, f"{subtype} most frequent class", 
                         va='bottom', color="black", fontsize=8)
+                
 
     ax5.set_title('Validation accuracy - non-relational question subtypes')
     ax5.set_xlabel('Epoch')
@@ -742,6 +759,7 @@ def visualize_training_log(log_path, output_dir=None, best_epoch=None):
             max_val = max(max_val, max(test_vals))
             
         ax5.set_ylim(0, max_val * 1.1)
+
 
     ax5.legend(handles=[tuple(elements[:2]) for elements in legend_elements],
             labels=[elements[2] for elements in legend_elements],
