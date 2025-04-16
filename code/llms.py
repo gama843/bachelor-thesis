@@ -147,7 +147,7 @@ def model_eval(experiment_dir, model_name):
 
     log_and_print(f"Model: {model_name}", log_file)
     log_and_print(f'Test samples: {len(builder.test_samples)}', log_file)
-    for img_path, question, answer, question_vector, _ in builder.test_samples:
+    for img_path, question, answer, question_vector in builder.test_samples:
         result = evaluate_model(img_path, question, question_vector, str(answer), answer_set, model_name)
         results.append(result)
         outcome = "PASS" if result['expected_answer'] == result['model_answer'] else "FAIL"
@@ -200,14 +200,14 @@ def run_llm_evaluation(experiment_dir, model_name='all'):
     experiment_dir : str
         Path to the experiment directory.
     model_name : str
-        Name of the model to evaluate ('all', 'gpt-4o', 'o1', 'gpt-4.5-preview').
+        Name of the model to evaluate ('all', 'gpt-4o', 'o1', 'gpt-4.5-preview', 'gpt-4.1').
 
     Raises:
     -------
     ValueError
         If an unknown model_name is provided.
     """
-    models = ['gpt-4o', 'o1', 'gpt-4.5-preview']
+    models = ['gpt-4o', 'o1', 'gpt-4.5-preview', 'gpt-4.1']
     model_name = model_name.lower()
 
     if model_name == 'all':
