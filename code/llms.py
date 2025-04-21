@@ -144,10 +144,9 @@ def model_eval(experiment_dir, model_name):
     results = []
     log_path = os.path.join(experiment_dir, f"eval_log_{model_name}.txt")
     log_file = open(log_path, "w")
-
     log_and_print(f"Model: {model_name}", log_file)
     log_and_print(f'Test samples: {len(builder.test_samples)}', log_file)
-    for img_path, question, answer, question_vector in builder.test_samples:
+    for img_path, question, answer, question_vector, _ in builder.test_samples:
         result = evaluate_model(img_path, question, question_vector, str(answer), answer_set, model_name)
         results.append(result)
         outcome = "PASS" if result['expected_answer'] == result['model_answer'] else "FAIL"
