@@ -263,7 +263,7 @@ class BinaryQuestionEncoder(nn.Module):
             
         return binary_questions 
         
-class RelationalNetwork(nn.Module):
+class RelationNetwork(nn.Module):
     """
     Module for relational reasoning, composed of two MLPs (g_theta and f_phi).
 
@@ -291,7 +291,7 @@ class RelationalNetwork(nn.Module):
         num_classes : int
             The number of output classes for the multi-class classification.        
         """
-        super(RelationalNetwork, self).__init__()
+        super(RelationNetwork, self).__init__()
         
         self.g_theta = nn.Sequential(
             nn.Linear(img_feature_dim + question_dim, 2000),
@@ -430,7 +430,7 @@ class RelationalReasoningModel(nn.Module):
         else:
             raise ValueError(f"Unsupported question form: {question_form}")  
 
-        self.relation_network = RelationalNetwork(hidden_size, num_classes, self.img_feature_dim)
+        self.relation_network = RelationNetwork(hidden_size, num_classes, self.img_feature_dim)
     
     def forward(self, image, question):
         """
