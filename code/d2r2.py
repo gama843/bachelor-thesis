@@ -30,7 +30,7 @@ from data_generator import DataGenerator
 from models import ModelConstructor
 from dataset_builder import DatasetBuilder, collate_fn
 from training import validate_one_epoch, train_and_validate, save_train_answer_distribution, compute_baseline_performance
-from llms import run_llm_evaluation
+from lvlms import run_llm_evaluation
 from utils import get_experiment_name
 
 def main():
