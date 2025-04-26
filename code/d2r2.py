@@ -57,15 +57,14 @@ def main():
         print("No arguments provided. Running default dataset generation and model training.")
         
         img_dim = 75
-        num_images = 100
-        num_epochs = 2
+        num_images = 10000
+        num_epochs = 25
         batch_size = 64
         model_type = 'relational'
         image_form = 'image'
-        img_arch = 'resnet'
-        question_form = 'binary'
-        note = ''
-        continue_training = False
+        img_arch = 'cnn'
+        question_form = 'string'
+        note = 'final'
 
         experiment_dir = get_experiment_name(num_images, model_type, image_form, question_form, seed, img_arch, note)
         data_dir = os.path.join(experiment_dir, 'data')
@@ -73,15 +72,9 @@ def main():
         generator = DataGenerator(data_dir)
         generator.generate_dataset(img_dim=img_dim, num_images=num_images)
 
-        if continue_training:
-            parent_dir = os.path.dirname(data_dir)
-            pickle_path = os.path.join(parent_dir, "dataset_builder.pickle")
-            builder = DatasetBuilder.load(pickle_path)
-            print('Dataset builder sucessfully loaded.')
-        else:
-            builder = DatasetBuilder(data_dir)
-            builder.save()
-            print('Dataset builder sucessfully saved.')
+        builder = DatasetBuilder(data_dir)
+        builder.save()
+        print('Dataset builder sucessfully saved.')
         
         save_train_answer_distribution(experiment_dir, builder)
 
@@ -106,7 +99,6 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
         
-
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 

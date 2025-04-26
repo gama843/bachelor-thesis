@@ -186,7 +186,7 @@ class FactoredRepresentationEncoder(nn.Module):
 
         return batch_tensor
         
-class QuestionEncoder(nn.Module):
+class LSTMQuestionEncoder(nn.Module):
     """
     Module for encoding questions using an LSTM.
 
@@ -198,7 +198,7 @@ class QuestionEncoder(nn.Module):
     """
 
     def __init__(self, vocab_size, embed_size, hidden_size, num_layers):
-        super(QuestionEncoder, self).__init__()
+        super(LSTMQuestionEncoder, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.lstm = nn.LSTM(embed_size, hidden_size, num_layers, batch_first=True)
 
@@ -423,7 +423,7 @@ class RelationalReasoningModel(nn.Module):
             raise ValueError(f"Unsupported image form: {image_form}")
         
         if question_form == 'string':
-            self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
+            self.question_encoder = LSTMQuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
         elif question_form == 'binary':
             self.question_encoder = BinaryQuestionEncoder()
             hidden_size = 11
@@ -485,7 +485,7 @@ class BaselineModel(nn.Module):
 
         # question encoder
         if question_form == 'string':
-            self.question_encoder = QuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
+            self.question_encoder = LSTMQuestionEncoder(vocab_size, embed_size, hidden_size, num_layers)
         elif question_form == 'binary':
             self.question_encoder = BinaryQuestionEncoder()
             hidden_size = 11  # fixed for binary question format
