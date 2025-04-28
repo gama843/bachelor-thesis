@@ -1,0 +1,53 @@
+Baseline performance evaluation
+
+Overall accuracy:
+  Random guessing: 0.0458
+  Most frequent class: 0.1704
+  Empirical distribution sampling: 0.0956
+  Human average: 0.8823
+
+Accuracy by question type:
+  non-relational:
+    Random guessing: 0.0440
+    Most frequent class: 0.1656
+    Empirical distribution sampling: 0.1188
+    Human average: 0.9654
+  relational:
+    Random guessing: 0.0476
+    Most frequent class: 0.1752
+    Empirical distribution sampling: 0.0724
+    Human average: 0.8114
+
+Accuracy by question subtype:
+  non-relational:
+    leftright:
+      Random guessing: 0.0423
+      Most frequent class: 0.0000
+      Empirical distribution sampling: 0.0688
+      Human average: 0.9545
+    shape:
+      Random guessing: 0.0476
+      Most frequent class: 0.4929
+      Empirical distribution sampling: 0.1988
+      Human average: 0.9740
+    topbottom:
+      Random guessing: 0.0421
+      Most frequent class: 0.0000
+      Empirical distribution sampling: 0.0877
+      Human average: 0.9688
+  relational:
+    closest:
+      Random guessing: 0.0477
+      Most frequent class: 0.0000
+      Empirical distribution sampling: 0.0239
+      Human average: 0.7494
+    count:
+      Random guessing: 0.0449
+      Most frequent class: 0.0000
+      Empirical distribution sampling: 0.0402
+      Human average: 0.8715
+    farthest:
+      Random guessing: 0.0501
+      Most frequent class: 0.5105
+      Empirical distribution sampling: 0.1492
+      Human average: 0.8057

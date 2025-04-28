@@ -1,0 +1,201 @@
+Training started at: 2025-04-13 22:12:34
+Early stopping patience: 5 epochs
+
+Epoch 1/25
+Epoch duration: 1401.37 seconds
+  Training time: 1388.72 seconds
+  Validation time: 12.65 seconds
+Training loss: 1.0191, Validation loss: 0.8089, Validation accuracy: 0.5514
+
+Accuracy breakdown per question type:
+  relational: 0.5665
+  non-relational: 0.5363
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.6667
+    count: 0.8145
+    closest: 0.2069
+  non-relational:
+    shape: 0.5605
+    topbottom: 0.5166
+    leftright: 0.5307
+Validation accuracy improved (0.0000 --> 0.5514). Saving best model (epoch 1)...
+
+Epoch 2/25
+Epoch duration: 1395.84 seconds
+  Training time: 1383.18 seconds
+  Validation time: 12.66 seconds
+Training loss: 0.8036, Validation loss: 0.7862, Validation accuracy: 0.5496
+
+Accuracy breakdown per question type:
+  relational: 0.5327
+  non-relational: 0.5665
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.6772
+    count: 0.7396
+    closest: 0.1689
+  non-relational:
+    shape: 0.6498
+    topbottom: 0.5166
+    leftright: 0.5307
+Validation accuracy did not improve for 1 epoch(s). Best accuracy: 0.5514
+
+Epoch 3/25
+Epoch duration: 1392.86 seconds
+  Training time: 1380.23 seconds
+  Validation time: 12.62 seconds
+Training loss: 0.7825, Validation loss: 0.7642, Validation accuracy: 0.5733
+
+Accuracy breakdown per question type:
+  relational: 0.5841
+  non-relational: 0.5625
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.7077
+    count: 0.8145
+    closest: 0.2179
+  non-relational:
+    shape: 0.6381
+    topbottom: 0.5166
+    leftright: 0.5307
+Validation accuracy improved (0.5514 --> 0.5733). Saving best model (epoch 3)...
+
+Epoch 4/25
+Epoch duration: 1389.92 seconds
+  Training time: 1377.34 seconds
+  Validation time: 12.58 seconds
+Training loss: 0.7716, Validation loss: 0.7628, Validation accuracy: 0.5574
+
+Accuracy breakdown per question type:
+  relational: 0.5618
+  non-relational: 0.5530
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.6655
+    count: 0.8145
+    closest: 0.1934
+  non-relational:
+    shape: 0.6369
+    topbottom: 0.4834
+    leftright: 0.5354
+Validation accuracy did not improve for 1 epoch(s). Best accuracy: 0.5733
+
+Epoch 5/25
+Epoch duration: 1389.10 seconds
+  Training time: 1376.54 seconds
+  Validation time: 12.56 seconds
+Training loss: 0.7629, Validation loss: 0.7604, Validation accuracy: 0.5476
+
+Accuracy breakdown per question type:
+  relational: 0.5602
+  non-relational: 0.5351
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.6890
+    count: 0.8145
+    closest: 0.1640
+  non-relational:
+    shape: 0.6498
+    topbottom: 0.4834
+    leftright: 0.4693
+Validation accuracy did not improve for 2 epoch(s). Best accuracy: 0.5733
+
+Epoch 6/25
+Epoch duration: 1388.99 seconds
+  Training time: 1376.45 seconds
+  Validation time: 12.55 seconds
+Training loss: 0.7624, Validation loss: 0.7602, Validation accuracy: 0.5502
+
+Accuracy breakdown per question type:
+  relational: 0.5729
+  non-relational: 0.5275
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.7077
+    count: 0.8145
+    closest: 0.1836
+  non-relational:
+    shape: 0.6275
+    topbottom: 0.4834
+    leftright: 0.4693
+Validation accuracy did not improve for 3 epoch(s). Best accuracy: 0.5733
+
+Epoch 7/25
+Epoch duration: 1389.21 seconds
+  Training time: 1376.58 seconds
+  Validation time: 12.63 seconds
+Training loss: 0.7605, Validation loss: 0.7542, Validation accuracy: 0.5604
+
+Accuracy breakdown per question type:
+  relational: 0.5689
+  non-relational: 0.5518
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.7031
+    count: 0.8145
+    closest: 0.1763
+  non-relational:
+    shape: 0.6381
+    topbottom: 0.4834
+    leftright: 0.5307
+Validation accuracy did not improve for 4 epoch(s). Best accuracy: 0.5733
+
+Epoch 8/25
+Epoch duration: 1388.58 seconds
+  Training time: 1375.99 seconds
+  Validation time: 12.59 seconds
+Training loss: 0.7596, Validation loss: 0.7641, Validation accuracy: 0.5510
+
+Accuracy breakdown per question type:
+  relational: 0.5602
+  non-relational: 0.5418
+
+Accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.6831
+    count: 0.8133
+    closest: 0.1714
+  non-relational:
+    shape: 0.6381
+    topbottom: 0.5166
+    leftright: 0.4693
+Validation accuracy did not improve for 5 epoch(s). Best accuracy: 0.5733
+Early stopping triggered after 8 epochs.
+
+Total training time: 11137.21 seconds (185.62 minutes)
+
+Loading best model from checkpoint (epoch 3): experiments/13042025_10000_relational_image_cnn_string_11_final/best_model_checkpoint.pth (Validation accuracy: 0.5733)
+
+Evaluating on test set...
+Test evaluation completed in 12.56 seconds
+
+Test set performance (using best model)
+Test loss: 0.7544, Test accuracy: 0.5796
+
+Test accuracy breakdown per question type:
+  relational: 0.5836
+  non-relational: 0.5756
+
+Test accuracy breakdown per question subtype:
+  relational:
+    farthest: 0.7179
+    count: 0.8038
+    closest: 0.2048
+  non-relational:
+    shape: 0.6655
+    topbottom: 0.5252
+    leftright: 0.5350
+Final model (epoch 3) saved to experiments/13042025_10000_relational_image_cnn_string_11_final/model.pth
+
+Training and evaluation completed at: 2025-04-14 01:18:24
+
+Generating training visualizations in experiments/13042025_10000_relational_image_cnn_string_11_final/plots
+Visualization generation completed in 6.70 seconds
