@@ -10,7 +10,7 @@
     "topbottom": 0.8125,
     "leftright": 1,
     "closest": 0.4864864864864865,
-    "furthest": 0.52,
+    "farthest": 0.52,
     "count": 0.43478260869565216,
     "non-relational": 0.8913043478260869,
     "relational": 0.4722222222222222,
@@ -34,7 +34,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": null,
       "correctAnswer": "square",
       "isCorrect": false,
@@ -274,7 +274,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -346,7 +346,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "circle",
       "isCorrect": false,
@@ -370,7 +370,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "circle",
       "isCorrect": false,
@@ -1378,7 +1378,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "circle",
       "isCorrect": false,
@@ -1402,7 +1402,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "square",
       "isCorrect": true,
@@ -1762,7 +1762,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "square",
       "isCorrect": true,
@@ -1858,7 +1858,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": null,
       "correctAnswer": "circle",
       "isCorrect": false,
@@ -1906,7 +1906,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -2098,7 +2098,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -2242,7 +2242,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -2338,7 +2338,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -2410,7 +2410,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -2530,7 +2530,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -2914,7 +2914,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -2962,7 +2962,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -3010,7 +3010,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "square",
       "isCorrect": true,
@@ -3634,7 +3634,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "square",
       "isCorrect": true,
@@ -3874,7 +3874,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "square",
       "isCorrect": true,
@@ -4138,7 +4138,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "square",
       "isCorrect": false,
@@ -4282,7 +4282,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -4450,7 +4450,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -4546,7 +4546,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -4738,7 +4738,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "circle",
       "correctAnswer": "circle",
       "isCorrect": true,
@@ -4762,7 +4762,7 @@
         1,
         0
       ],
-      "subtype": "furthest",
+      "subtype": "farthest",
       "userAnswer": "square",
       "correctAnswer": "circle",
       "isCorrect": false,
