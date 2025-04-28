@@ -351,7 +351,7 @@ class RelationNetwork(nn.Module):
         # now, let's prepare a full copy of the question embedding for each pair
         question_embedding_expanded = question_embedding.unsqueeze(1).unsqueeze(2).repeat(1, num_objects, num_objects, 1)
 
-        # and finally to conclude this mental gymnastics, concat all the cubes - 
+        # and finally to conclude this, concat all the cubes - 
         # features of obj_i, obj_j and question embedding finally come together 
         # (batch_size, num_objects, num_objects, 2*feature_dim + question_dim)
         pair_features = torch.cat([obj_i, obj_j, question_embedding_expanded], dim=3)
