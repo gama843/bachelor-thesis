@@ -269,14 +269,15 @@ def validate_one_epoch(model, val_loader, criterion, device, question_form, imag
                 pass
             else:
                 raise ValueError(f"Unsupported image form: {image_form}")
+            
             images = images.to(device)
-            questions = torch.tensor(questions, dtype=torch.long, device=device)
-            binary_questions = binary_questions.to(device)
             answers = torch.tensor(answers, dtype=torch.long, device=device)
             
             if question_form == 'string':
+                questions = torch.tensor(questions, dtype=torch.long, device=device)
                 outputs = model(images, questions)
             elif question_form == 'binary':
+                binary_questions = binary_questions.to(device)
                 outputs = model(images, binary_questions)
             else:
                 raise ValueError(f"Unsupported question form: {question_form}")
