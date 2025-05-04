@@ -37,7 +37,7 @@ Then, to ensure determinism in certain cuBLAS routines and support all functiona
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 ```
 
-You will also need to set the OpenAI api key environment variable:
+You will also need to set the OpenAI API key environment variable:
 
 ```bash
 export OPENAI_API_KEY=""
